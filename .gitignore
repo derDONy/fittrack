@@ -1,0 +1,13 @@
+# Geheimnisse — NIEMALS ins Repo!
+.env
+
+# Lokale Daten / Datenbank
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# System-Dateien
+.DS_Store
+Thumbs.db
+@eaDir/
