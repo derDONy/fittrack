@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  fittrack:
+    build: .
+    container_name: fittrack
+    restart: unless-stopped
+    ports:
+      - "8484:8484"
+    volumes:
+      - fittrack_data:/app/data
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - FITTRACK_USER=${FITTRACK_USER:-der_DONy}
+      - FITTRACK_PASS=${FITTRACK_PASS:-changeme}
+      - TZ=Europe/Berlin
+      # Notfall-Passwort-Reset: Wert eintragen, Container neu starten,
+      # einloggen, dann Wert wieder entfernen und nochmal neu starten.
+      - FITTRACK_RESET_PASS=${FITTRACK_RESET_PASS:-}
+      # Rate-Limiting anpassen (optional):
+      - LOGIN_MAX_ATTEMPTS=${LOGIN_MAX_ATTEMPTS:-10}
+      - LOGIN_WINDOW_MINUTES=${LOGIN_WINDOW_MINUTES:-10}
+
+volumes:
+  fittrack_data:
