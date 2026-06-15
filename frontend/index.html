@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<!-- FitTrack v0.9.3 — 2026-06-15 -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>FitTrack</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" href="/icons/favicon.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--s:#12121a;--s2:#1a1a26;--s3:#222233;--a:#00e5a0;--a2:#00c4ff;--ad:rgba(0,229,160,0.12);--d:#ff4466;--w:#ffaa00;--t:#e8e8f0;--t2:#8888a0;--t3:#555566;--r:14px;--f:'Space Grotesk',sans-serif;--m:'JetBrains Mono',monospace}
+html{font-size:16px;background:var(--bg)}body{font-family:var(--f);background:var(--bg);color:var(--t);min-height:100vh;-webkit-tap-highlight-color:transparent}
+input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+::-webkit-scrollbar{width:0}
+
+/* Login */
+.login-w{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:max(20px,env(safe-area-inset-top,20px)) 20px 20px}
+.login-b{background:var(--s);border:1px solid var(--s3);border-radius:16px;padding:2rem 1.5rem;width:100%;max-width:360px;text-align:center}
+.login-b h1{font-size:2rem;font-weight:800;margin-bottom:4px}
+.login-b h1 span{color:var(--a)}
+.login-b .sub{color:var(--t2);font-size:.85rem;margin-bottom:24px}
+.login-b .err{color:var(--d);font-size:.82rem;margin-top:10px;min-height:20px}
+.fg{margin-bottom:12px;text-align:left}
+.fg label{display:block;font-size:.78rem;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px;background:var(--s2);border:1.5px solid var(--s3);border-radius:10px;color:var(--t);font-family:var(--f);font-size:1rem;outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus{border-color:var(--a)}
+.btn-p{width:100%;padding:14px;background:var(--a);color:var(--bg);border:none;border-radius:10px;font-family:var(--f);font-size:1rem;font-weight:700;cursor:pointer}
+
+/* Passwort anzeigen */
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:40px}
+.pw-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--t3);font-size:1.1rem;padding:5px;-webkit-tap-highlight-color:transparent;user-select:none;line-height:1}
+.pw-eye:active{color:var(--a)}
+
+/* App */
+.app{display:none;max-width:500px;margin:0 auto;padding:env(safe-area-inset-top,0) 12px 90px}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+.hdr h1{font-size:1.2rem;font-weight:800}.hdr h1 span{color:var(--a)}
+.hdr-u{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--t2)}
+.hdr-u .dot{width:7px;height:7px;border-radius:50%;background:var(--a)}
+
+/* Bottom nav */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--s);border-top:1px solid var(--s3);display:flex;justify-content:space-around;padding:8px 0 max(env(safe-area-inset-bottom),8px);z-index:50}
+.bnav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:2px 16px}
+.bnav button .ico{font-size:1.3rem}.bnav button .lbl{font-size:.68rem;font-weight:600;font-family:var(--f)}
+
+/* Tab */
+.tc{display:none}.tc.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .2s ease}
+
+/* Plan chips */
+.chips{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.chip{padding:7px 14px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid var(--s3);background:var(--s);color:var(--t2);white-space:nowrap;flex-shrink:0;transition:all .15s}
+.chip.on{border-color:var(--a);background:var(--a);color:var(--bg)}
+
+/* Quick Training machine card */
+.qt{background:var(--s);border:1px solid var(--s3);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:all .2s}
+.qt.done{opacity:.45;border-color:rgba(0,229,160,.35)}
+.qt-top{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}
+.qt-del{width:26px;height:26px;border-radius:50%;background:var(--s3);border:none;color:var(--t3);cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.qt-del:active{background:var(--d);color:var(--bg)}
+.qt-cb{width:26px;height:26px;border-radius:7px;border:2.5px solid var(--s3);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.qt-cb.on{background:var(--a);border-color:var(--a)}
+.qt-cb.on::after{content:'✓';color:var(--bg);font-weight:800;font-size:.8rem}
+.qt-info{flex:1;min-width:0}
+.qt-row1{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
+.qt-nr{font-size:1rem;font-family:var(--m);color:var(--t2);font-weight:700}
+.qt-name{font-size:1rem;font-weight:700}
+.qt-seat{font-size:1rem;font-family:var(--m);color:var(--a);font-weight:600}
+.qt-mg{font-size:.75rem;color:var(--t3)}
+.qt-meth{display:flex;gap:4px;margin-bottom:8px}
+.qt-meth button{flex:1;padding:6px;border:1.5px solid var(--s3);border-radius:8px;background:var(--bg);color:var(--t2);font-family:var(--f);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s}
+.qt-meth button.sel{border-color:var(--a);background:var(--ad);color:var(--a)}
+
+.qt-body{padding:0 12px 12px}
+.qt-prev{font-size:.75rem;font-family:var(--m);color:var(--t3);margin-bottom:8px;padding:5px 8px;background:var(--s2);border-radius:6px}
+.qt-drops{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.qt-drop{background:var(--s2);border-radius:10px;padding:8px 6px}
+.qt-drop-label{font-size:.72rem;color:var(--t3);font-weight:700;text-align:center;margin-bottom:6px}
+.qt-inp{width:100%;padding:10px 4px;background:var(--bg);border:1.5px solid var(--s3);border-radius:8px;color:var(--t);font-family:var(--m);font-size:1rem;text-align:center;outline:none;transition:border-color .15s}
+.qt-inp:focus{border-color:var(--a)}
+.qt-inp.has{border-color:rgba(0,229,160,.35)}
+.qt-cardio{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qt-cardio-label{font-size:.72rem;color:var(--t3);font-weight:600;text-transform:uppercase;margin-bottom:3px;text-align:center}
+
+/* Neg einzeln dropdown */
+.qt-einzeln{display:flex;gap:4px;margin-bottom:8px;align-items:center}
+.qt-einzeln select{padding:5px 8px;background:var(--bg);border:1.5px solid var(--s3);border-radius:8px;color:var(--t);font-family:var(--f);font-size:.78rem;outline:none;flex:1}
+.qt-einzeln select:focus{border-color:var(--a)}
+.qt-lr-label{font-size:.65rem;color:var(--a2);font-weight:700;text-align:center;margin-bottom:3px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:var(--s);border:1px solid var(--s3);border-radius:12px;padding:14px 10px;text-align:center}
+.stat .v{font-size:1.8rem;font-weight:700;font-family:var(--m);color:var(--a)}
+.stat .l{font-size:.7rem;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* Neglected */
+.neg{background:var(--s);border:1px solid var(--w);border-radius:12px;padding:12px;margin-bottom:12px}
+.neg h3{color:var(--w);font-size:.82rem;font-weight:700;margin-bottom:6px}
+.neg-list{display:flex;flex-wrap:wrap;gap:5px}
+.neg-item{font-size:.78rem;background:rgba(255,170,0,.1);color:var(--w);padding:3px 8px;border-radius:5px}
+
+/* AI */
+.ai{background:linear-gradient(135deg,var(--s) 0%,#1a1a2e 100%);border:1px solid var(--ad);border-radius:12px;padding:14px;margin-bottom:12px}
+.ai h3{color:var(--a);font-size:.88rem;font-weight:700;margin-bottom:8px}
+.ai-text{font-size:.82rem;line-height:1.65;white-space:pre-wrap}
+.ai-row{display:flex;gap:6px;margin-top:10px}
+.ai-row input{flex:1;padding:10px 12px;background:var(--s2);border:1px solid var(--s3);border-radius:10px;color:var(--t);font-family:var(--f);font-size:.85rem;outline:none}
+.ai-btn{padding:10px 16px;background:var(--a);color:var(--bg);border:none;border-radius:10px;font-family:var(--f);font-size:.78rem;font-weight:700;cursor:pointer}
+
+/* Chart bars */
+.cb-row{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.cb-label{font-family:var(--m);font-size:.72rem;color:var(--t3);width:44px;text-align:right;flex-shrink:0}
+.cb-bar{height:18px;background:var(--a);border-radius:3px;min-width:2px}
+.cb-val{font-family:var(--m);font-size:.72rem;color:var(--t2);flex-shrink:0}
+
+/* Card */
+.card{background:var(--s);border:1px solid var(--s3);border-radius:12px;padding:14px;margin-bottom:10px}
+
+/* Workout history */
+.wi{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--s3)}
+.wi:last-child{border-bottom:none}
+.wi-date{font-family:var(--m);font-size:.78rem;color:var(--t2);background:var(--s2);padding:2px 6px;border-radius:4px;flex-shrink:0}
+.wi-info{flex:1;min-width:0}
+.wi-name{font-size:.9rem;font-weight:600}
+.wi-drop{font-size:.7rem;color:var(--t3)}
+.wi-stats{font-size:.85rem;margin-top:2px}
+.wi-n{font-family:var(--m);font-weight:600;color:var(--a)}
+.wi-del{width:28px;height:28px;border-radius:50%;background:var(--s3);border:none;color:var(--t3);cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Workout history (aufklappbar pro Tag) */
+.hd{background:var(--s);border:1px solid var(--s3);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.hd-top{display:flex;justify-content:space-between;align-items:center;padding:12px;cursor:pointer;gap:8px}
+.hd-date{font-size:.95rem;font-weight:700}
+.hd-sub{font-size:.72rem;color:var(--t3);font-family:var(--m);margin-top:2px}
+.hd-arrow{color:var(--t3);font-size:.85rem;transition:transform .2s;flex-shrink:0}
+.hd.open .hd-arrow{transform:rotate(180deg)}
+.hd-body{display:none;padding:0 10px 10px}
+.hd.open .hd-body{display:block}
+.hm{background:var(--s2);border-radius:10px;padding:10px;margin-bottom:6px}
+.hm:last-child{margin-bottom:0}
+.hm-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hm-badge{font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
+.hm-sets{font-family:var(--m);font-size:.85rem;margin-top:7px;display:flex;gap:12px;flex-wrap:wrap;color:var(--t2)}
+.hm-sets b{color:var(--t);font-weight:600}
+.hm-sets .hw{color:var(--a);font-weight:700}
+
+/* Analysis */
+.trend-up{color:var(--a)}.trend-down{color:var(--d)}.trend-neutral{color:var(--t2)}
+
+/* Machine list */
+.ml-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s3)}
+.ml-nr{font-family:var(--m);font-size:.9rem;color:var(--t2);font-weight:700;width:28px}
+.ml-name{flex:1;font-size:.9rem;font-weight:600}
+.ml-seat{font-family:var(--m);font-size:.9rem;color:var(--a);font-weight:600}
+.ml-btns{display:flex;gap:3px}
+.ml-btn{width:28px;height:28px;border-radius:50%;background:var(--s3);border:none;color:var(--t2);cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center}
+
+/* Plan modal */
+.mo{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.mo.open{opacity:1;pointer-events:auto}
+.ml-modal{background:var(--s);border:1px solid var(--s3);border-radius:16px 16px 0 0;padding:1.5rem;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;transform:translateY(20px);transition:transform .25s}
+.mo.open .ml-modal{transform:translateY(0)}
+.mo-h{font-size:1.1rem;font-weight:700;margin-bottom:12px}
+.mo-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.mo-btn{padding:10px 20px;border:none;border-radius:10px;font-family:var(--f);font-size:.85rem;font-weight:600;cursor:pointer}
+.mo-btn-p{background:var(--a);color:var(--bg)}.mo-btn-s{background:var(--s3);color:var(--t)}
+
+/* Machine picker */
+.mp{max-height:40vh;overflow-y:auto;border:1px solid var(--s3);border-radius:10px;padding:6px}
+.mp-cat{font-size:.72rem;font-weight:600;color:var(--t3);text-transform:uppercase;padding:4px 6px;margin-top:4px}
+.mp-item{display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:.9rem}
+.mp-item:active{background:var(--s2)}
+.mp-cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--s3);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
+.mp-item.sel .mp-cb{background:var(--a);border-color:var(--a);color:var(--bg)}
+
+.save-msg{text-align:center;margin-top:8px;color:var(--a);font-weight:700;min-height:1.4rem}
+.legend{display:flex;gap:12px;justify-content:center;margin-top:10px;font-size:.65rem;color:var(--t3)}
+.btn-logout{width:100%;margin-top:16px;padding:12px;background:transparent;border:1px solid var(--d);border-radius:10px;color:var(--d);font-family:var(--f);font-size:.88rem;font-weight:600;cursor:pointer}
+
+/* Wellbeing modal */
+.wb-q{margin-bottom:16px}
+.wb-q-label{font-size:.82rem;font-weight:700;color:var(--t2);margin-bottom:8px}
+.wb-opts{display:flex;gap:6px}
+.wb-opt{flex:1;padding:10px 4px;border:2px solid var(--s3);border-radius:10px;background:var(--s2);text-align:center;cursor:pointer;transition:all .15s;font-size:.72rem;font-weight:600;color:var(--t2)}
+.wb-opt .wb-ico{font-size:1.3rem;display:block;margin-bottom:2px}
+.wb-opt.sel{border-color:var(--a);background:var(--ad);color:var(--a)}
+
+/* Wellbeing chart */
+.wb-chart{position:relative;height:160px;display:flex;align-items:flex-end;gap:3px;padding-bottom:20px}
+.wb-bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.wb-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height .3s}
+.wb-bar-date{font-size:.58rem;font-family:var(--m);color:var(--t3);position:absolute;bottom:0;transform:rotate(-45deg);transform-origin:top left;white-space:nowrap}
+.wb-legend{display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.wb-legend span{font-size:.68rem;color:var(--t2);display:flex;align-items:center;gap:4px}
+.wb-legend .wb-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.wb-period{display:flex;gap:4px;margin-bottom:10px}
+.wb-period button{flex:1;padding:6px;border:1.5px solid var(--s3);border-radius:8px;background:var(--bg);color:var(--t2);font-family:var(--f);font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s}
+.wb-period button.sel{border-color:var(--a);background:var(--ad);color:var(--a)}
+/* Pause Toast */
+.pause-toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--s2);border:1.5px solid var(--a);border-radius:14px;padding:10px 18px;display:flex;align-items:center;gap:14px;z-index:60;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,229,160,.25)}
+.pause-toast.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+.pause-toast-time{font-family:var(--m);font-size:1.3rem;font-weight:700;color:var(--a)}
+.pause-toast-btn{background:var(--s3);border:none;color:var(--t);padding:6px 14px;border-radius:8px;font-family:var(--f);font-size:.8rem;font-weight:700;cursor:pointer}
+/* Sort buttons */
+.qt-sort{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.qt-sort button{width:24px;height:24px;border-radius:5px;background:var(--s3);border:none;color:var(--t3);cursor:pointer;font-size:.62rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.qt-sort button:active{background:var(--a2);color:var(--bg)}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="loginScreen" class="login-w">
+ <div class="login-b">
+  <div style="font-size:48px;margin-bottom:16px">💪</div>
+  <h1>Fit<span>Track</span></h1>
+  <p class="sub">Dein Fitness Tracker</p>
+  <div class="fg"><label>Benutzername</label><input type="text" id="loginUser" autocomplete="username" autofocus></div>
+  <div class="fg"><label>Passwort</label><div class="pw-wrap"><input type="password" id="loginPass" autocomplete="current-password"><button class="pw-eye" type="button" onmousedown="showPw('loginPass')" onmouseup="hidePw('loginPass')" onmouseleave="hidePw('loginPass')" ontouchstart="event.preventDefault();showPw('loginPass')" ontouchend="hidePw('loginPass')">👁</button></div></div>
+  <button class="btn-p" onclick="doLogin()">Einloggen</button>
+  <div class="err" id="loginError"></div>
+ </div>
+</div>
+
+<!-- App -->
+<div class="app" id="mainApp">
+ <div class="hdr">
+  <h1>Fit<span>Track</span></h1>
+  <div class="hdr-u"><span class="dot"></span><span id="curUser">—</span></div>
+ </div>
+
+ <!-- Bottom Nav -->
+ <div class="bnav" id="bnav">
+  <button data-tab="plan"><span class="ico">🏋️</span><span class="lbl">Training</span></button>
+  <button data-tab="dash"><span class="ico">📊</span><span class="lbl">Stats</span></button>
+  <button data-tab="history"><span class="ico">📋</span><span class="lbl">Verlauf</span></button>
+  <button data-tab="more"><span class="ico">⚙️</span><span class="lbl">Mehr</span></button>
+ </div>
+
+ <!-- TRAINING -->
+ <div id="tab-plan" class="tc on fi">
+
+  <!-- Startansicht: Pläne nur anzeigen, Training noch nicht aufzeichnen -->
+  <div id="startScreen">
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span style="font-size:.72rem;color:var(--t3);font-family:var(--m)" id="qtDateDisplay"></span>
+    <button class="mo-btn mo-btn-s" style="padding:6px 12px;font-size:.75rem" onclick="openPlanModal()">+ Plan</button>
+   </div>
+   <div class="chips" id="planChips"></div>
+   <div class="card" id="planPreview" style="display:none"></div>
+   <button class="btn-p" id="btnStartPlan" style="margin-top:8px;font-size:1.05rem;font-weight:800;display:none" onclick="startTraining('plan')">▶️ Training beginnen</button>
+   <button class="mo-btn mo-btn-s" style="width:100%;margin-top:8px;padding:13px;font-size:.95rem" onclick="startTraining('adhoc')">📅 Heutiges Training (ohne Plan)</button>
+   <div id="noPlan" style="display:none;text-align:center;padding:2rem 1rem;color:var(--t2)">
+    <div style="font-size:2rem;margin-bottom:8px">📋</div>
+    <p>Erstelle einen Trainingsplan oder starte ein heutiges Training ohne Plan.</p>
+   </div>
+  </div>
+
+  <!-- Aktive Trainings-Ansicht: erst sichtbar nach "Training beginnen" -->
+  <div id="activeScreen" style="display:none">
+   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:8px">
+    <span id="sessionTitle" style="font-size:1rem;font-weight:800"></span>
+    <span style="font-size:.72rem;color:var(--t3);font-family:var(--m);flex-shrink:0" id="sessionDate"></span>
+   </div>
+   <div id="qtList"></div>
+   <button class="mo-btn mo-btn-s" style="width:100%;margin-top:4px;padding:10px;font-size:.85rem" onclick="openAddMachineModal()">+ Gerät hinzufügen</button>
+   <button class="btn-p" style="margin-top:8px;font-size:1.1rem;font-weight:800" onclick="saveQt()">🏁 Training beenden</button>
+   <button style="width:100%;margin-top:8px;padding:10px;background:transparent;border:1px solid var(--s3);border-radius:10px;color:var(--t3);font-family:var(--f);font-size:.8rem;cursor:pointer" onclick="cancelTraining()">✕ Training abbrechen</button>
+   <div class="legend"><span><span style="color:var(--a);font-weight:800">●</span> besser</span><span><span style="color:var(--d);font-weight:800">●</span> schlechter</span></div>
+  </div>
+
+  <div class="save-msg" id="qtMsg"></div>
+ </div>
+
+ <!-- DASHBOARD -->
+ <div id="tab-dash" class="tc fi">
+  <div class="stats" id="statsRow"></div>
+  <div id="negBanner"></div>
+  <div class="ai">
+   <h3>🤖 AI Coach</h3>
+   <div class="ai-text" id="aiTip"><button class="ai-btn" onclick="loadAi()">🔍 Analyse starten</button></div>
+   <div class="ai-row"><input type="text" id="aiQ" placeholder="Frag den Coach..."><button class="ai-btn" onclick="loadAi()">Fragen</button></div>
+  </div>
+  <div class="card"><h3 style="font-size:.85rem;color:var(--t2);margin-bottom:10px">Volumen (90 Tage)</h3><div id="volChart"></div></div>
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.85rem;color:var(--t2);margin-bottom:10px">Befinden</h3>
+   <div class="wb-period">
+    <button class="sel" onclick="loadWbChart(30,this)">30 Tage</button>
+    <button onclick="loadWbChart(90,this)">90 Tage</button>
+    <button onclick="loadWbChart(240,this)">8 Monate</button>
+   </div>
+   <div id="wbChart"></div>
+   <div class="wb-legend">
+    <span><span class="wb-dot" style="background:#00e5a0"></span>Befinden</span>
+    <span><span class="wb-dot" style="background:#00c4ff"></span>Schlaf</span>
+    <span><span class="wb-dot" style="background:#ffaa00"></span>Gelenke</span>
+    <span><span class="wb-dot" style="background:#8888a0"></span>Trinken</span>
+   </div>
+  </div>
+ </div>
+
+ <!-- HISTORY -->
+ <div id="tab-history" class="tc fi">
+  <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:12px">Verlauf</h2>
+  <div id="histList"></div>
+ </div>
+
+ <!-- MORE -->
+ <div id="tab-more" class="tc fi">
+  <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:12px">Einstellungen</h2>
+  <div class="card">
+   <h3 style="color:var(--a);font-size:.88rem;font-weight:700;margin-bottom:12px">🔒 Passwort</h3>
+   <div class="fg"><label>Aktuelles PW</label><div class="pw-wrap"><input type="password" id="cpCur"><button class="pw-eye" type="button" onmousedown="showPw('cpCur')" onmouseup="hidePw('cpCur')" onmouseleave="hidePw('cpCur')" ontouchstart="event.preventDefault();showPw('cpCur')" ontouchend="hidePw('cpCur')">👁</button></div></div>
+   <div class="fg"><label>Neues PW</label><div class="pw-wrap"><input type="password" id="cpNew" placeholder="Min. 6 Zeichen"><button class="pw-eye" type="button" onmousedown="showPw('cpNew')" onmouseup="hidePw('cpNew')" onmouseleave="hidePw('cpNew')" ontouchstart="event.preventDefault();showPw('cpNew')" ontouchend="hidePw('cpNew')">👁</button></div></div>
+   <div class="fg"><label>Bestätigen</label><div class="pw-wrap"><input type="password" id="cpConf"><button class="pw-eye" type="button" onmousedown="showPw('cpConf')" onmouseup="hidePw('cpConf')" onmouseleave="hidePw('cpConf')" ontouchstart="event.preventDefault();showPw('cpConf')" ontouchend="hidePw('cpConf')">👁</button></div></div>
+   <button class="mo-btn mo-btn-p" onclick="changePw()">Ändern</button>
+   <div id="cpMsg" style="font-size:.82rem;margin-top:6px;min-height:1.2rem"></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">📋 Geräte</h3>
+   <div id="machineList"></div>
+   <button class="mo-btn mo-btn-s" style="margin-top:10px;width:100%" onclick="openMachineModal()">+ Gerät hinzufügen</button>
+  </div>
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">📈 Analyse</h3>
+   <div class="fg"><select id="anaMachine" onchange="loadAnalysis()"><option value="">Gerät wählen…</option></select></div>
+   <div id="anaResult"></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">⏱ Pausentimer</h3>
+   <div class="fg"><label>Pause zwischen Sätzen</label>
+    <select id="pauseTimerSel" onchange="savePauseTimerSetting(this.value)">
+     <option value="0">Kein Timer</option>
+     <option value="60">60 Sekunden</option>
+     <option value="90">90 Sekunden (Standard)</option>
+     <option value="120">2 Minuten</option>
+     <option value="180">3 Minuten</option>
+    </select>
+   </div>
+  </div>
+  <button class="btn-logout" onclick="doLogout()">Logout</button>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v0.9.3 · 15.06.2026</div>
+ </div>
+</div>
+
+<!-- Plan Modal -->
+<div class="mo" id="planModal"><div class="ml-modal">
+ <div class="mo-h" id="planModalTitle">Neuer Trainingsplan</div>
+ <input type="hidden" id="editPlanId">
+ <div class="fg"><label>Name</label><input type="text" id="planName" placeholder="z.B. Push Day"></div>
+ <div class="fg"><label>Geräte</label></div>
+ <div class="mp" id="planPicker"></div>
+ <div style="font-size:.72rem;color:var(--t2);margin-top:4px">Ausgewählt: <span id="planCount">0</span></div>
+ <div class="mo-actions"><button class="mo-btn mo-btn-s" onclick="closePlanModal()">Abbrechen</button><button class="mo-btn mo-btn-p" onclick="savePlan()">Speichern</button></div>
+</div></div>
+
+<!-- Machine Modal -->
+<div class="mo" id="machineModal"><div class="ml-modal">
+ <div class="mo-h" id="machineModalTitle">Gerät hinzufügen</div>
+ <input type="hidden" id="editMachId">
+ <div style="display:grid;grid-template-columns:60px 1fr;gap:8px">
+  <div class="fg"><label>Nr.</label><input type="text" id="machNr" placeholder="01"></div>
+  <div class="fg"><label>Name</label><input type="text" id="machName" placeholder="Brustpresse"></div>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+  <div class="fg"><label>Kategorie</label><select id="machCat"><option>Drückübungen</option><option>Zugübungen</option><option>Beine</option><option>Core</option><option>Arme</option><option>Cardio</option><option>Sonstige</option></select></div>
+  <div class="fg"><label>Sitz-Einstellung</label><input type="text" id="machSeat" placeholder="z.B. h7"></div>
+ </div>
+ <div class="fg"><label>Muskelgruppe</label><input type="text" id="machMG" placeholder="Brust, Trizeps"></div>
+ <div class="mo-actions">
+  <button id="machDeleteBtn" class="mo-btn" style="background:transparent;border:1px solid var(--d);color:var(--d);display:none;margin-right:auto" onclick="deleteMachine()">🗑 Löschen</button>
+  <button class="mo-btn mo-btn-s" onclick="closeMachineModal()">Abbrechen</button><button class="mo-btn mo-btn-p" onclick="saveMachine()">Speichern</button>
+ </div>
+</div></div>
+
+<!-- Add Machine to Session Modal -->
+<div class="mo" id="addMachModal"><div class="ml-modal">
+ <div class="mo-h">Geräte hinzufügen</div>
+ <div class="mp" id="addMachPicker" style="max-height:55vh"></div>
+ <div style="font-size:.72rem;color:var(--t2);margin-top:4px">Ausgewählt: <span id="addMachCount">0</span></div>
+ <div class="mo-actions"><button class="mo-btn mo-btn-s" onclick="closeAddMachineModal()">Abbrechen</button><button class="mo-btn mo-btn-p" onclick="confirmAddMachine()">Hinzufügen</button></div>
+</div></div>
+
+<!-- Wellbeing Modal -->
+<div class="mo" id="wbModal"><div class="ml-modal">
+ <div class="mo-h">💪 Wie war's heute?</div>
+ <div class="wb-q">
+  <div class="wb-q-label">Befinden</div>
+  <div class="wb-opts" id="wbMood">
+   <div class="wb-opt" onclick="wbSel('mood',1,this)"><span class="wb-ico">💪</span>Super</div>
+   <div class="wb-opt" onclick="wbSel('mood',2,this)"><span class="wb-ico">😊</span>Gut</div>
+   <div class="wb-opt" onclick="wbSel('mood',3,this)"><span class="wb-ico">😐</span>Okay</div>
+   <div class="wb-opt" onclick="wbSel('mood',4,this)"><span class="wb-ico">😩</span>Schlecht</div>
+  </div>
+ </div>
+ <div class="wb-q">
+  <div class="wb-q-label">Schlaf letzte Nacht</div>
+  <div class="wb-opts" id="wbSleep">
+   <div class="wb-opt" onclick="wbSel('sleep',1,this)"><span class="wb-ico">😴</span>Sehr gut</div>
+   <div class="wb-opt" onclick="wbSel('sleep',2,this)"><span class="wb-ico">🙂</span>Gut</div>
+   <div class="wb-opt" onclick="wbSel('sleep',3,this)"><span class="wb-ico">😕</span>Mäßig</div>
+   <div class="wb-opt" onclick="wbSel('sleep',4,this)"><span class="wb-ico">💀</span>Schlecht</div>
+  </div>
+ </div>
+ <div class="wb-q">
+  <div class="wb-q-label">Getrunken beim Training</div>
+  <div class="wb-opts" id="wbHydration">
+   <div class="wb-opt" onclick="wbSel('hydration',0.5,this)"><span class="wb-ico">💧</span>0,5L</div>
+   <div class="wb-opt" onclick="wbSel('hydration',1,this)"><span class="wb-ico">💧</span>1L</div>
+   <div class="wb-opt" onclick="wbSel('hydration',1.5,this)"><span class="wb-ico">💦</span>1,5L</div>
+   <div class="wb-opt" onclick="wbSel('hydration',2,this)"><span class="wb-ico">🌊</span>2L+</div>
+  </div>
+ </div>
+ <div class="wb-q">
+  <div class="wb-q-label">Gelenke / Arthritis</div>
+  <div class="wb-opts" id="wbJoints">
+   <div class="wb-opt" onclick="wbSel('joints',1,this)"><span class="wb-ico">👍</span>Kein Problem</div>
+   <div class="wb-opt" onclick="wbSel('joints',2,this)"><span class="wb-ico">⚠️</span>Leicht steif</div>
+   <div class="wb-opt" onclick="wbSel('joints',3,this)"><span class="wb-ico">🔥</span>Schmerzhaft</div>
+  </div>
+ </div>
+ <div class="mo-actions"><button class="mo-btn mo-btn-s" onclick="skipWellbeing()">Überspringen</button><button class="mo-btn mo-btn-p" onclick="confirmWellbeing()">Speichern & Beenden</button></div>
+</div></div>
+
+<!-- Pause Timer Toast -->
+<div id="pauseToast" class="pause-toast">
+ <span style="font-size:.9rem;font-weight:700">⏱ Pause: <span id="pauseToastTime" class="pause-toast-time">1:30</span></span>
+ <button class="pause-toast-btn" onclick="hideTimerToast()">Weiter →</button>
+</div>
+
+<script>
+let machines=[],plans=[],activePlan=null,qtState={},qtDone={},lastSession={},extraMachines=[],skippedMachines=[],trainingActive=false,sessionType=null,sessionOrder=[];
+let pauseTimerSecs=90,pauseTimerInterval=null,pauseTimerRemaining=0;
+
+function showPw(id){const el=document.getElementById(id);if(el)el.type='text'}
+function hidePw(id){const el=document.getElementById(id);if(el)el.type='password'}
+
+async function api(u,o={}){const r=await fetch(u,{headers:{'Content-Type':'application/json'},...o,body:o.body?JSON.stringify(o.body):undefined});if(r.status===401&&!u.includes('/auth/')){showLogin();throw new Error('401')}return r.json()}
+function showLogin(){document.getElementById('loginScreen').style.display='flex';document.getElementById('mainApp').style.display='none'}
+function showApp(u){document.getElementById('loginScreen').style.display='none';document.getElementById('mainApp').style.display='block';document.getElementById('curUser').textContent=u}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ── localStorage persistence (nur für AKTIVE Trainings) ──
+function persistTraining(){if(!trainingActive)return;try{localStorage.setItem('ft_active',JSON.stringify({active:true,type:sessionType,planId:activePlan,state:qtState,done:qtDone,extra:extraMachines,skipped:skippedMachines,order:sessionOrder,ts:Date.now()}))}catch{}}
+function loadPersistedTraining(){try{const d=JSON.parse(localStorage.getItem('ft_active'));if(d&&d.active===true&&(Date.now()-d.ts)<86400000)return d}catch{}return null}
+function clearPersistedTraining(){try{localStorage.removeItem('ft_active')}catch{}}
+
+// Auth
+async function checkAuth(){try{const r=await fetch('/api/auth/me');const d=await r.json();if(d.logged_in){showApp(d.username);initApp()}else showLogin()}catch{showLogin()}}
+let _lockoutTimer=null;
+function _startLockoutCountdown(secs){
+  clearInterval(_lockoutTimer);
+  const e=document.getElementById('loginError');
+  const btn=document.querySelector('.login-b .btn-p');
+  if(btn)btn.disabled=true;
+  function tick(){
+    if(secs<=0){clearInterval(_lockoutTimer);e.textContent='';e.style.color='';if(btn)btn.disabled=false;return}
+    const m=Math.floor(secs/60),s=secs%60;
+    e.textContent=`🔒 Gesperrt — noch ${m>0?m+':'+String(s).padStart(2,'0'):s+' Sek.'} warten`;
+    e.style.color='var(--w)';secs--;
+  }
+  tick();_lockoutTimer=setInterval(tick,1000);
+}
+async function doLogin(){const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value,e=document.getElementById('loginError');e.textContent='';e.style.color='var(--d)';if(!u||!p)return e.textContent='Bitte beides eingeben.';try{const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});const d=await r.json();if(r.ok&&d.ok){clearInterval(_lockoutTimer);showApp(d.username);initApp()}else if(d.locked&&d.wait_seconds){_startLockoutCountdown(d.wait_seconds)}else{e.textContent=d.error||'Fehler'}}catch{e.textContent='Verbindungsfehler'}}
+async function doLogout(){await fetch('/api/auth/logout',{method:'POST'});showLogin()}
+async function changePw(){const m=document.getElementById('cpMsg'),c=document.getElementById('cpCur').value,n=document.getElementById('cpNew').value,n2=document.getElementById('cpConf').value;m.textContent='';m.style.color='';if(!c||!n)return(m.textContent='Bitte ausfüllen',m.style.color='var(--d)');if(n!==n2)return(m.textContent='Stimmt nicht überein',m.style.color='var(--d)');try{const d=await api('/api/auth/change-password',{method:'POST',body:{current_password:c,new_password:n}});if(d.ok){m.textContent='✅ Geändert!';m.style.color='var(--a)'}else{m.textContent=d.error;m.style.color='var(--d)'}}catch{}}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+// Nav
+document.querySelectorAll('#bnav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tab-'+b.dataset.tab).classList.add('on');
+  document.querySelectorAll('#bnav button').forEach(x=>{x.querySelector('.ico').style.opacity=x===b?1:.4;x.querySelector('.lbl').style.color=x===b?'var(--a)':'var(--t3)'});
+}));
+
+// Machines
+async function loadMachines(){machines=await api('/api/machines');renderMachineList();renderAnalysisSelect()}
+function renderMachineList(){document.getElementById('machineList').innerHTML=machines.map(m=>`<div class="ml-item"><span class="ml-nr">${esc(m.machine_number)||'—'}</span><span class="ml-name">${esc(m.name)}</span>${m.seat_settings?`<span class="ml-seat">${esc(m.seat_settings)}</span>`:''}<div class="ml-btns"><button class="ml-btn" onclick="editMachine(${m.id})">✏️</button></div></div>`).join('')}
+function renderAnalysisSelect(){document.getElementById('anaMachine').innerHTML='<option value="">Gerät wählen…</option>'+machines.map(m=>`<option value="${m.id}">${esc(m.machine_number?m.machine_number+' ':'')}${esc(m.name)}</option>`).join('')}
+
+function openMachineModal(m){document.getElementById('machineModalTitle').textContent=m?'Gerät bearbeiten':'Gerät hinzufügen';document.getElementById('editMachId').value=m?m.id:'';document.getElementById('machNr').value=m?m.machine_number||'':'';document.getElementById('machName').value=m?m.name:'';document.getElementById('machCat').value=m?m.category:'Sonstige';document.getElementById('machSeat').value=m?m.seat_settings||'':'';document.getElementById('machMG').value=m?m.muscle_group:'';document.getElementById('machDeleteBtn').style.display=m?'block':'none';document.getElementById('machineModal').classList.add('open')}
+function closeMachineModal(){document.getElementById('machineModal').classList.remove('open')}
+function editMachine(id){const m=machines.find(x=>x.id===id);if(m)openMachineModal(m)}
+async function deleteMachine(){const id=document.getElementById('editMachId').value;if(!id)return;const name=document.getElementById('machName').value;if(!confirm(`"${name}" wirklich löschen?\n\nDas Gerät wird aus der Liste entfernt.`))return;await api(`/api/machines/${id}`,{method:'DELETE'});closeMachineModal();loadMachines()}
+async function saveMachine(){const id=document.getElementById('editMachId').value;const d={machine_number:document.getElementById('machNr').value.trim(),name:document.getElementById('machName').value.trim(),category:document.getElementById('machCat').value,seat_settings:document.getElementById('machSeat').value.trim(),muscle_group:document.getElementById('machMG').value.trim()};if(!d.name)return alert('Name fehlt');if(id)await api(`/api/machines/${id}`,{method:'PUT',body:d});else await api('/api/machines',{method:'POST',body:d});closeMachineModal();loadMachines()}
+
+// ── Add Machine to active session ──
+let addMachSelIds=[];
+function openAddMachineModal(){
+  addMachSelIds=[];
+  const p=sessionType==='plan'?plans.find(x=>x.id===activePlan):null;
+  const usedIds=p?p.machines.filter(m=>!skippedMachines.includes(m.machine_id)).map(m=>m.machine_id):[];
+  extraMachines.forEach(m=>usedIds.push(m.machine_id));
+  const avail=machines.filter(m=>!usedIds.includes(m.id));
+  document.getElementById('addMachPicker').innerHTML=avail.length?avail.map(m=>
+    `<div class="mp-item" id="amp-${m.id}" onclick="toggleAddMach(${m.id})"><div class="mp-cb"></div><span>${esc(m.machine_number?m.machine_number+' ':'')}${esc(m.name)}</span></div>`
+  ).join(''):'<p style="color:var(--t2);padding:12px">Alle Geräte sind bereits in der Session.</p>';
+  document.getElementById('addMachCount').textContent='0';
+  document.getElementById('addMachModal').classList.add('open');
+}
+function closeAddMachineModal(){document.getElementById('addMachModal').classList.remove('open')}
+function toggleAddMach(id){
+  const i=addMachSelIds.indexOf(id);
+  if(i>=0){addMachSelIds.splice(i,1)}else{addMachSelIds.push(id)}
+  const el=document.getElementById('amp-'+id);
+  if(el){el.classList.toggle('sel',addMachSelIds.includes(id));el.querySelector('.mp-cb').textContent=addMachSelIds.includes(id)?'✓':''}
+  document.getElementById('addMachCount').textContent=addMachSelIds.length;
+}
+async function confirmAddMachine(){
+  if(!addMachSelIds.length)return;
+  const empty=document.getElementById('qtEmpty');if(empty)empty.remove();
+  for(const selId of addMachSelIds){
+    const m=machines.find(x=>x.id===selId);if(!m)continue;
+    // Un-skip if it was a skipped plan machine
+    const skipIdx=skippedMachines.indexOf(selId);
+    if(skipIdx>=0){skippedMachines.splice(skipIdx,1)}
+    else{
+      const pm={machine_id:m.id,machine_number:m.machine_number,name:m.name,category:m.category,muscle_group:m.muscle_group,seat_settings:m.seat_settings};
+      extraMachines.push(pm);
+    }
+    const isCardio=m.category==='Cardio';
+    // Letzte Session für vorher-Zeile + Default-Methode laden
+    try{const data=await api(`/api/workouts/last-session?machine_ids=${m.id}`);if(data[m.id])lastSession[m.id]=data[m.id]}catch{}
+    let meth='d';const last=lastSession[m.id];
+    if(!isCardio&&last?.method){if(last.method==='negativ')meth='n';else if(last.method==='normal')meth='o'}
+    if(isCardio){qtState[m.id]={method:'c',d:[{w:'',r:''}]};}
+    else if(meth==='n'){qtState[m.id]={method:'n',d:[{w:'',r:''},{w:'',r:''},{w:'',r:'',rL:'',rR:''}]};}
+    else{qtState[m.id]={method:meth,d:[{w:'',r:''},{w:'',r:''},{w:'',r:''}]};}
+    // Find pmData for rendering
+    const p=sessionType==='plan'?plans.find(x=>x.id===activePlan):null;
+    const pmData=p?.machines.find(x=>x.machine_id===m.id)||extraMachines.find(x=>x.machine_id===m.id)||{machine_id:m.id,machine_number:m.machine_number,name:m.name,category:m.category,muscle_group:m.muscle_group,seat_settings:m.seat_settings};
+    sessionOrder.push(m.id);
+    document.getElementById('qtList').insertAdjacentHTML('beforeend',renderMachineCard(pmData));
+  }
+  closeAddMachineModal();
+  persistTraining();
+}
+
+function removeMachine(mid){
+  // Remove card from DOM
+  const el=document.getElementById('qt-'+mid);
+  if(el)el.remove();
+  // Remove from state
+  delete qtState[mid];
+  delete qtDone[mid];
+  // Remove from sessionOrder
+  const orderIdx=sessionOrder.indexOf(mid);
+  if(orderIdx>=0)sessionOrder.splice(orderIdx,1);
+  // Track as skipped (for plan machines) or remove from extras
+  const extraIdx=extraMachines.findIndex(m=>m.machine_id===mid);
+  if(extraIdx>=0){extraMachines.splice(extraIdx,1)}
+  else{if(!skippedMachines.includes(mid))skippedMachines.push(mid)}
+  if(!document.querySelector('#qtList .qt'))document.getElementById('qtList').innerHTML=qtEmptyHtml();
+  persistTraining();
+}
+
+function qtEmptyHtml(){return'<p id="qtEmpty" style="color:var(--t2);text-align:center;padding:1.5rem 0;font-size:.9rem">Noch keine Geräte — füge unten welche hinzu.</p>'}
+
+// ── Reihenfolge ändern ──
+function moveCard(mid,dir){
+  const idx=sessionOrder.indexOf(mid);
+  if(idx<0)return;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=sessionOrder.length)return;
+  const midA=sessionOrder[idx];const midB=sessionOrder[newIdx];
+  sessionOrder[idx]=midB;sessionOrder[newIdx]=midA;
+  const elA=document.getElementById('qt-'+midA);
+  const elB=document.getElementById('qt-'+midB);
+  if(!elA||!elB)return;
+  const list=document.getElementById('qtList');
+  if(dir===-1){list.insertBefore(elA,elB)}else{list.insertBefore(elB,elA)}
+  persistTraining();
+}
+
+// ── Pausentimer ──
+function startPauseTimer(){
+  if(!pauseTimerSecs)return;
+  clearInterval(pauseTimerInterval);
+  pauseTimerRemaining=pauseTimerSecs;
+  document.getElementById('pauseToast').classList.add('show');
+  updateTimerToast();
+  pauseTimerInterval=setInterval(()=>{
+    pauseTimerRemaining--;
+    updateTimerToast();
+    if(pauseTimerRemaining<=0){clearInterval(pauseTimerInterval);document.getElementById('pauseToast').classList.remove('show')}
+  },1000);
+}
+function updateTimerToast(){
+  const m=Math.floor(pauseTimerRemaining/60),s=pauseTimerRemaining%60;
+  document.getElementById('pauseToastTime').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+}
+function hideTimerToast(){
+  clearInterval(pauseTimerInterval);
+  document.getElementById('pauseToast').classList.remove('show');
+}
+function savePauseTimerSetting(val){
+  pauseTimerSecs=parseInt(val)||0;
+  try{localStorage.setItem('ft_pauseTimer',val)}catch{}
+}
+
+// Plans
+async function loadPlans(){plans=await api('/api/plans');if(plans.length&&!activePlan)activePlan=plans[0].id;await renderQt()}
+function renderPlanChips(){document.getElementById('planChips').innerHTML=plans.map(p=>`<div class="chip ${p.id===activePlan?'on':''}" onclick="selectPlan(${p.id})">${esc(p.name)}<span style="margin-left:5px;opacity:.5;font-size:.7rem" onclick="event.stopPropagation();delPlan(${p.id})">✕</span></div>`).join('');document.getElementById('noPlan').style.display=plans.length?'none':'block';document.getElementById('btnStartPlan').style.display=plans.length?'block':'none'}
+function selectPlan(id){if(trainingActive)return;activePlan=id;renderPlanChips();renderPlanPreview()}
+async function delPlan(id){if(!confirm('Plan löschen?'))return;await api(`/api/plans/${id}`,{method:'DELETE'});if(activePlan===id){activePlan=plans.find(p=>p.id!==id)?.id||null}loadPlans()}
+
+// Plan-Vorschau (nur Anzeige, keine Eingabefelder)
+function renderPlanPreview(){
+  const el=document.getElementById('planPreview');
+  const p=plans.find(x=>x.id===activePlan);
+  if(!p){el.style.display='none';el.innerHTML='';return}
+  el.style.display='block';
+  el.innerHTML=`<h3 style="font-size:.85rem;color:var(--t2);margin-bottom:8px">${esc(p.name)} — ${p.machines.length} Geräte</h3>`+
+    p.machines.map(m=>`<div class="ml-item"><span class="ml-nr">${esc(m.machine_number)||'—'}</span><span class="ml-name">${esc(m.name)}</span>${m.seat_settings?`<span class="ml-seat">${esc(m.seat_settings)}</span>`:''}</div>`).join('');
+}
+
+// ── Haupt-Render: entscheidet zwischen Startansicht und aktivem Training ──
+async function renderQt(){
+  document.getElementById('qtDateDisplay').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  const persisted=loadPersistedTraining();
+  if(persisted){
+    // Laufendes Training wiederherstellen (z.B. nach Seiten-Reload)
+    trainingActive=true;sessionType=persisted.type||'plan';activePlan=persisted.planId;
+    qtState=persisted.state||{};qtDone=persisted.done||{};extraMachines=persisted.extra||[];skippedMachines=persisted.skipped||[];sessionOrder=persisted.order||[];
+    await showActiveScreen(true);
+    return;
+  }
+  trainingActive=false;sessionType=null;sessionOrder=[];
+  document.getElementById('activeScreen').style.display='none';
+  document.getElementById('startScreen').style.display='block';
+  renderPlanChips();renderPlanPreview();
+}
+
+// ── Training starten ──
+async function startTraining(type){
+  if(trainingActive)return;
+  sessionType=type;
+  qtState={};qtDone={};extraMachines=[];skippedMachines=[];lastSession={};sessionOrder=[];
+  if(type==='plan'){
+    const p=plans.find(x=>x.id===activePlan);
+    if(!p)return alert('Bitte erst einen Plan auswählen');
+    const mids=p.machines.map(m=>m.machine_id).join(',');
+    try{lastSession=await api(`/api/workouts/last-session?machine_ids=${mids}`)}catch{lastSession={}}
+    p.machines.forEach(pm=>{
+      const mid=pm.machine_id;const isCardio=pm.category==='Cardio';
+      const last=lastSession[mid];
+      let meth='d';
+      if(!isCardio && last?.method){
+        if(last.method==='negativ')meth='n';
+        else if(last.method==='normal')meth='o';
+        else meth='d';
+      }
+      if(isCardio){qtState[mid]={method:'c',d:[{w:'',r:''}]};}
+      else if(meth==='n'){qtState[mid]={method:'n',d:[{w:'',r:''},{w:'',r:''},{w:'',r:'',rL:'',rR:''}]};}
+      else{qtState[mid]={method:meth,d:[{w:'',r:''},{w:'',r:''},{w:'',r:''}]};}
+      sessionOrder.push(mid);
+    });
+  }
+  // Bei 'adhoc' bleibt die Plan-Auswahl unberührt — entscheidend ist sessionType
+  trainingActive=true;
+  persistTraining();
+  await showActiveScreen(false);
+}
+
+// ── Aktive Trainings-Ansicht rendern ──
+async function showActiveScreen(restoring){
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('activeScreen').style.display='block';
+  const p=sessionType==='plan'?plans.find(x=>x.id===activePlan):null;
+  const dateStr=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('sessionTitle').textContent=(sessionType==='plan'&&p)?('🏋️ '+p.name):('🏋️ Training '+dateStr);
+  document.getElementById('sessionDate').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  const planMachines=p?p.machines:[];
+  // Build machine lookup map
+  const allPmMap={};[...planMachines,...extraMachines].forEach(pm=>allPmMap[pm.machine_id]=pm);
+  // If sessionOrder is empty (fresh adhoc start), build from allPm
+  if(!sessionOrder.length){
+    sessionOrder=[...planMachines,...extraMachines].filter(pm=>!skippedMachines.includes(pm.machine_id)).map(pm=>pm.machine_id);
+  }
+  if(restoring&&sessionOrder.length){
+    const mids=sessionOrder.join(',');
+    try{lastSession=await api(`/api/workouts/last-session?machine_ids=${mids}`)}catch{lastSession={}}
+  }
+  const orderedPm=sessionOrder.map(id=>allPmMap[id]).filter(Boolean);
+  const el=document.getElementById('qtList');
+  el.innerHTML=orderedPm.length?orderedPm.map(pm=>renderMachineCard(pm)).join(''):qtEmptyHtml();
+  // Abgehakte Geräte wiederherstellen
+  orderedPm.forEach(pm=>{if(qtDone[pm.machine_id]){qtDone[pm.machine_id]=false;toggleDone(pm.machine_id)}});
+}
+
+// ── Training abbrechen (ohne Speichern) ──
+function cancelTraining(){
+  if(!confirm('Training wirklich abbrechen? Alle Eingaben gehen verloren.'))return;
+  clearPersistedTraining();
+  trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];
+  hideTimerToast();
+  renderQt();
+}
+
+function renderMachineCard(pm){
+  const mid=pm.machine_id;const isCardio=pm.category==='Cardio';
+  const last=lastSession[mid];const st=qtState[mid];const m=st.method;
+  // Only show max 3 drops in vorher line
+  const lastDrops=last?.drops?.slice(0,3)||[];
+  const prevStr=lastDrops.length&&!isCardio?lastDrops.filter(d=>d.weight).map(d=>`${d.weight}kg / ${d.reps}×`).join('   '):'';
+
+  let header=`<div class="qt" id="qt-${mid}"><div class="qt-top"><div class="qt-cb" id="cb-${mid}" onclick="toggleDone(${mid})"></div><div class="qt-info" onclick="toggleDone(${mid})"><div class="qt-row1">${pm.machine_number?`<span class="qt-nr">${esc(pm.machine_number)}</span>`:''}<span class="qt-name">${esc(pm.name)}</span>${pm.seat_settings?`<span class="qt-seat">${esc(pm.seat_settings)}</span>`:''}</div><span class="qt-mg">${esc(pm.muscle_group)}</span></div><div class="qt-sort"><button onclick="event.stopPropagation();moveCard(${mid},-1)" title="Nach oben">▲</button><button onclick="event.stopPropagation();moveCard(${mid},1)" title="Nach unten">▼</button></div><button class="qt-del" onclick="event.stopPropagation();removeMachine(${mid})" title="Gerät entfernen">✕</button></div>`;
+
+  let body=`<div class="qt-body" id="body-${mid}">`;
+
+  if(isCardio){
+    body+=`<div class="qt-cardio"><div><div class="qt-cardio-label">Minuten</div><input class="qt-inp" type="number" inputmode="numeric" placeholder="Min" oninput="qtState[${mid}].d[0].w=this.value;persistTraining()"></div><div><div class="qt-cardio-label">km</div><input class="qt-inp" type="number" inputmode="decimal" placeholder="km" oninput="qtState[${mid}].d[0].r=this.value;persistTraining()"></div></div>`;
+  } else {
+    // D/N/O method buttons
+    body+=`<div class="qt-meth"><button id="mb-${mid}-d" class="${m==='d'?'sel':''}" onclick="setMethod(${mid},'d')">D Drop</button><button id="mb-${mid}-n" class="${m==='n'?'sel':''}" onclick="setMethod(${mid},'n')">N Negativ</button><button id="mb-${mid}-o" class="${m==='o'?'sel':''}" onclick="setMethod(${mid},'o')">O Normal</button></div>`;
+
+    // Einzeln/Zusammen dropdown for Negativ
+    if(m==='n'){
+      const isEinzeln=st.einzeln||false;
+      body+=`<div class="qt-einzeln"><select onchange="setEinzeln(${mid},this.value==='einzeln');persistTraining()"><option value="zusammen" ${!isEinzeln?'selected':''}>Zusammen</option><option value="einzeln" ${isEinzeln?'selected':''}>Einzeln (L/R)</option></select></div>`;
+    }
+
+    // Previous session
+    if(prevStr)body+=`<div class="qt-prev">vorher: ${prevStr}</div>`;
+
+    // Labels
+    const labels=m==='d'?['Drop 1','Drop 2','Drop 3']:(m==='n'?['Warm 1','Warm 2','Negativ']:['Satz 1','Satz 2','Satz 3']);
+
+    if(m==='n'&&st.einzeln){
+      // Negativ Einzeln: Warm 1+2 normal, Negativ-Satz mit L/R
+      body+=`<div class="qt-drops">`;
+      [0,1].forEach(i=>{
+        const lw=lastDrops[i]?.weight||'';const lr=lastDrops[i]?.reps||'';
+        const curW=st.d[i]?.w||'';const curR=st.d[i]?.r||'';
+        body+=`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorRep(this,${lr||0});this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"></div>`;
+      });
+      // Negativsatz (index 2) mit L/R
+      const lw2=lastDrops[2]?.weight||'';
+      const curW2=st.d[2]?.w||'';const curRL=st.d[2]?.rL||'';const curRR=st.d[2]?.rR||'';
+      body+=`<div class="qt-drop"><div class="qt-drop-label">Negativ</div><input class="qt-inp ${curW2?'has':''}" id="w-${mid}-2" type="number" inputmode="decimal" placeholder="${lw2||'kg'}" value="${curW2}" oninput="onWeightInput(${mid},2,this.value)"><div style="height:4px"></div><div class="qt-lr-label">L</div><input class="qt-inp ${curRL?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRL}" oninput="qtState[${mid}].d[2].rL=this.value;this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"><div style="height:3px"></div><div class="qt-lr-label">R</div><input class="qt-inp ${curRR?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRR}" oninput="qtState[${mid}].d[2].rR=this.value;this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"></div>`;
+      body+=`</div>`;
+    } else {
+      // D, O und N-Zusammen: alle 3 Felder mit Gewicht + Wdh
+      body+=`<div class="qt-drops">${[0,1,2].map(i=>{
+        const lw=lastDrops[i]?.weight||'';const lr=lastDrops[i]?.reps||'';
+        const curW=st.d[i]?.w||'';const curR=st.d[i]?.r||'';
+        return`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorRep(this,${lr||0});this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"></div>`;
+      }).join('')}</div>`;
+    }
+  }
+
+  body+=`</div>`;
+  return header+body+`</div>`;
+}
+
+async function setMethod(mid,method){
+  qtState[mid].method=method;
+  if(method==='n'){qtState[mid].d=[{w:'',r:''},{w:'',r:''},{w:'',r:'',rL:'',rR:''}];}
+  else{qtState[mid].d=[{w:'',r:''},{w:'',r:''},{w:'',r:''}];}
+  qtState[mid].einzeln=false;
+  // Fetch method-specific last session
+  const methMap={d:'dropsatz',n:'negativ',o:'normal'};
+  try{
+    const data=await api(`/api/workouts/last-session?machine_ids=${mid}&method=${methMap[method]}`);
+    if(data[mid])lastSession[mid]=data[mid];
+    else delete lastSession[mid];
+  }catch{}
+  const p=sessionType==='plan'?plans.find(x=>x.id===activePlan):null;
+  const pm=p?.machines.find(m=>m.machine_id===mid)||extraMachines.find(m=>m.machine_id===mid);
+  if(!pm)return;
+  const el=document.getElementById('qt-'+mid);
+  const wasDone=qtDone[mid];
+  const tmp=document.createElement('div');
+  tmp.innerHTML=renderMachineCard(pm);
+  el.replaceWith(tmp.firstChild);
+  if(wasDone)toggleDone(mid);
+  persistTraining();
+}
+
+function setEinzeln(mid,isEinzeln){
+  qtState[mid].einzeln=isEinzeln;
+  // Reset data: warmup slots normal, negativ slot with L/R
+  qtState[mid].d=[{w:'',r:''},{w:'',r:''},{w:'',r:'',rL:'',rR:''}];
+  const p=sessionType==='plan'?plans.find(x=>x.id===activePlan):null;
+  const pm=p?.machines.find(m=>m.machine_id===mid)||extraMachines.find(m=>m.machine_id===mid);
+  if(!pm)return;
+  const el=document.getElementById('qt-'+mid);
+  const wasDone=qtDone[mid];
+  const tmp=document.createElement('div');
+  tmp.innerHTML=renderMachineCard(pm);
+  el.replaceWith(tmp.firstChild);
+  if(wasDone)toggleDone(mid);
+}
+
+function onWeightInput(mid,dropIdx,val){
+  const st=qtState[mid];
+  st.d[dropIdx].w=val;
+  const w=parseFloat(val)||0;
+  const el=document.getElementById('w-'+mid+'-'+dropIdx);
+  if(el)el.classList.toggle('has',!!val);
+
+  if(dropIdx===0 && w>0){
+    if(st.method==='d'){
+      const w2=Math.max(0,w-10);const w3=Math.max(0,w-20);
+      st.d[1].w=String(w2);st.d[2].w=String(w3);
+      const e1=document.getElementById('w-'+mid+'-1');
+      const e2=document.getElementById('w-'+mid+'-2');
+      if(e1){e1.value=w2;e1.classList.add('has')}
+      if(e2){e2.value=w3;e2.classList.add('has')}
+    } else if(st.method==='o'){
+      st.d[1].w=val;st.d[2].w=val;
+      const e1=document.getElementById('w-'+mid+'-1');
+      const e2=document.getElementById('w-'+mid+'-2');
+      if(e1){e1.value=val;e1.classList.add('has')}
+      if(e2){e2.value=val;e2.classList.add('has')}
+    }
+  }
+  persistTraining();
+}
+
+function colorRep(el,lastR){if(!lastR||!el.value){el.style.color='var(--t)';el.style.fontWeight='400';return}const v=Number(el.value);el.style.color=v>lastR?'var(--a)':(v<lastR?'var(--d)':'var(--t)');el.style.fontWeight='700'}
+function toggleDone(mid){qtDone[mid]=!qtDone[mid];const el=document.getElementById('qt-'+mid);const cb=document.getElementById('cb-'+mid);const body=document.getElementById('body-'+mid);if(qtDone[mid]){el.classList.add('done');cb.classList.add('on');body.style.display='none'}else{el.classList.remove('done');cb.classList.remove('on');body.style.display='block'}persistTraining()}
+
+// ── Wellbeing ──
+let wbData={mood:null,sleep:null,hydration:null,joints:null};
+let pendingEntries=null,pendingDate=null,pendingPlan=null;
+
+function wbSel(key,val,el){
+  wbData[key]=val;
+  el.parentElement.querySelectorAll('.wb-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function openWbModal(){
+  wbData={mood:null,sleep:null,hydration:null,joints:null};
+  document.querySelectorAll('#wbModal .wb-opt').forEach(o=>o.classList.remove('sel'));
+  document.getElementById('wbModal').classList.add('open');
+}
+function closeWbModal(){document.getElementById('wbModal').classList.remove('open')}
+
+async function confirmWellbeing(){
+  // Save wellbeing
+  await api('/api/wellbeing',{method:'POST',body:{log_date:pendingDate,mood:wbData.mood||3,sleep:wbData.sleep||3,hydration:wbData.hydration,joints:wbData.joints,is_training_day:1}});
+  closeWbModal();
+  await finishSaveQt();
+}
+
+async function skipWellbeing(){
+  closeWbModal();
+  await finishSaveQt();
+}
+
+async function saveQt(){
+  if(!trainingActive)return;
+  const p=sessionType==='plan'?plans.find(x=>x.id===activePlan):null;
+  const planMachines=p?p.machines:[];
+  const date=new Date().toISOString().slice(0,10);const entries=[];
+  const allPmMap={};[...planMachines,...extraMachines].forEach(pm=>allPmMap[pm.machine_id]=pm);
+  const allPm=sessionOrder.map(id=>allPmMap[id]).filter(Boolean);
+  // ── Prüfung: unvollständige Sätze erkennen ──
+  const problems=[];
+  for(const pm of allPm){const s=qtState[pm.machine_id];if(!s)continue;
+    if(pm.category==='Cardio'){
+      const w=parseFloat(s.d[0]?.w)||0,r=parseFloat(s.d[0]?.r)||0;
+      if((w>0)!==(r>0))problems.push(`${pm.name}: Minuten oder km fehlt`);
+      continue;
+    }
+    const miss=[];
+    s.d.forEach((d,i)=>{
+      const w=parseFloat(d.w)||0;
+      // Negativ Einzeln: nur Satz 3 (idx 2) hat L/R
+      const hasReps=s.method==='n'&&s.einzeln&&i===2?((parseInt(d.rL)||0)>0&&(parseInt(d.rR)||0)>0):((parseInt(d.r)||0)>0);
+      const anyReps=s.method==='n'&&s.einzeln&&i===2?((parseInt(d.rL)||0)>0||(parseInt(d.rR)||0)>0):((parseInt(d.r)||0)>0);
+      if(w>0&&!hasReps)miss.push(`Satz ${i+1} ohne Wdh`);
+      else if(!w&&anyReps)miss.push(`Satz ${i+1} ohne Gewicht`);
+    });
+    if(miss.length)problems.push(`${pm.name}: ${miss.join(', ')}`);
+  }
+  if(problems.length&&!confirm(`⚠️ Unvollständige Sätze werden NICHT gespeichert:\n\n${problems.join('\n')}\n\nGraue Werte sind nur Platzhalter — Wdh müssen eingetippt werden!\n\nTrotzdem beenden?`))return;
+  for(const pm of allPm){const s=qtState[pm.machine_id];if(!s)continue;
+    const meth=s.method==='d'?'dropsatz':(s.method==='n'?'negativ':'normal');
+    if(s.method==='n'&&s.einzeln){
+      // Warm 1+2 haben .r, Negativsatz (idx 2) hat .rL und .rR
+      const dropsL=s.d.map((d,i)=>({weight:parseFloat(d.w)||0,reps:i===2?(parseInt(d.rL)||0):(parseInt(d.r)||0)}));
+      const dropsR=s.d.map((d,i)=>({weight:parseFloat(d.w)||0,reps:i===2?(parseInt(d.rR)||0):(parseInt(d.r)||0)}));
+      if(dropsL.some(d=>d.weight>0&&d.reps>0))entries.push({machine_id:pm.machine_id,drops:dropsL,training_method:meth,notes:'Links'});
+      if(dropsR.some(d=>d.weight>0&&d.reps>0))entries.push({machine_id:pm.machine_id,drops:dropsR,training_method:meth,notes:'Rechts'});
+    } else {
+      const drops=s.d.map(d=>({weight:parseFloat(d.w)||0,reps:parseInt(d.r)||0}));
+      if(!drops.some(d=>d.weight>0&&d.reps>0))continue;
+      entries.push({machine_id:pm.machine_id,drops,training_method:meth});
+    }
+  }
+  if(!entries.length)return alert('Keine Daten eingetragen');
+  pendingEntries=entries;pendingDate=date;pendingPlan=p||null;
+  openWbModal();
+}
+
+async function finishSaveQt(){
+  const r=await api('/api/workouts/batch',{method:'POST',body:{workout_date:pendingDate,entries:pendingEntries}});
+  clearPersistedTraining();
+  trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];
+  hideTimerToast();
+  await renderQt();
+  document.getElementById('qtMsg').textContent=`✅ ${r.saved} Sätze gespeichert — Training beendet!`;setTimeout(()=>document.getElementById('qtMsg').textContent='',5000);
+  loadOverview();loadHistory();loadWbChart(30);
+}
+
+// Wellbeing Chart
+async function loadWbChart(days=30,btn){
+  if(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel')}
+  const el=document.getElementById('wbChart');
+  try{
+    const data=await api(`/api/wellbeing?days=${days}`);
+    if(!data.length){el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Noch keine Befinden-Daten.</p>';return}
+    // Render bars — lower value = better, so we invert for display (4-val+1 for mood/sleep, 4-val for joints)
+    const maxH=120;
+    let html='<div style="display:flex;align-items:flex-end;gap:2px;height:'+maxH+'px;overflow-x:auto;padding-bottom:22px;position:relative">';
+    data.forEach(d=>{
+      const mood=d.mood?(5-d.mood)/4:0;
+      const sleep=d.sleep?(5-d.sleep)/4:0;
+      const joints=d.joints?(4-d.joints)/3:0;
+      const hydra=d.hydration?Math.min(d.hydration/2,1):0;
+      const bw=Math.max(12,Math.floor(500/data.length)-2);
+      const dt=d.log_date.slice(5);
+      html+=`<div style="display:flex;gap:1px;align-items:flex-end;flex-shrink:0;position:relative" title="${d.log_date}">`;
+      html+=`<div style="width:${bw/4}px;height:${Math.max(2,mood*maxH*.85)}px;background:#00e5a0;border-radius:2px 2px 0 0"></div>`;
+      html+=`<div style="width:${bw/4}px;height:${Math.max(2,sleep*maxH*.85)}px;background:#00c4ff;border-radius:2px 2px 0 0"></div>`;
+      html+=`<div style="width:${bw/4}px;height:${Math.max(2,joints*maxH*.85)}px;background:#ffaa00;border-radius:2px 2px 0 0"></div>`;
+      html+=`<div style="width:${bw/4}px;height:${Math.max(2,hydra*maxH*.85)}px;background:#8888a0;border-radius:2px 2px 0 0"></div>`;
+      html+=`<span style="position:absolute;bottom:-18px;left:0;font-size:.55rem;font-family:var(--m);color:var(--t3);white-space:nowrap">${dt}</span>`;
+      html+=`</div>`;
+    });
+    html+='</div>';
+    el.innerHTML=html;
+  }catch{el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Fehler beim Laden.</p>'}
+}
+
+// Plan modal
+let planSelIds=[];
+async function openPlanModal(p){await loadMachines();document.getElementById('planModalTitle').textContent=p?'Plan bearbeiten':'Neuer Plan';document.getElementById('editPlanId').value=p?p.id:'';document.getElementById('planName').value=p?p.name:'';planSelIds=p?p.machines.map(m=>m.machine_id):[];renderPlanPicker();document.getElementById('planModal').classList.add('open')}
+function closePlanModal(){document.getElementById('planModal').classList.remove('open')}
+function editPlan(){const p=plans.find(x=>x.id===activePlan);if(p)openPlanModal(p)}
+function renderPlanPicker(){const cats=[...new Set(machines.map(m=>m.category))];document.getElementById('planPicker').innerHTML=cats.map(c=>`<div class="mp-cat">${esc(c)}</div>${machines.filter(m=>m.category===c).map(m=>`<div class="mp-item ${planSelIds.includes(m.id)?'sel':''}" onclick="togglePlanM(${m.id})"><div class="mp-cb">${planSelIds.includes(m.id)?'✓':''}</div><span>${esc(m.machine_number?m.machine_number+' ':'')}${esc(m.name)}</span></div>`).join('')}`).join('');document.getElementById('planCount').textContent=planSelIds.length}
+function togglePlanM(id){const i=planSelIds.indexOf(id);if(i>=0)planSelIds.splice(i,1);else planSelIds.push(id);renderPlanPicker()}
+async function savePlan(){const id=document.getElementById('editPlanId').value;const d={name:document.getElementById('planName').value.trim(),training_method:'dropsatz',machine_ids:planSelIds};if(!d.name)return alert('Name fehlt');if(!d.machine_ids.length)return alert('Min. 1 Gerät');if(id)await api(`/api/plans/${id}`,{method:'PUT',body:d});else{const r=await api('/api/plans',{method:'POST',body:d});activePlan=r.id}closePlanModal();loadPlans()}
+
+// Dashboard
+async function loadOverview(){const o=await api('/api/analytics/overview');document.getElementById('statsRow').innerHTML=`<div class="stat"><div class="v">${o.total_workouts}</div><div class="l">Gesamt</div></div><div class="stat"><div class="v">${o.workouts_this_week}</div><div class="l">Diese Woche</div></div><div class="stat"><div class="v">${o.workouts_this_month}</div><div class="l">30 Tage</div></div><div class="stat"><div class="v">${o.active_days_this_month}</div><div class="l">Trainingstage</div></div>`;
+  const n=o.neglected_machines||[];document.getElementById('negBanner').innerHTML=n.length?`<div class="neg"><h3>⚠️ Vernachlässigt (&gt;14 Tage)</h3><div class="neg-list">${n.map(x=>`<span class="neg-item">${esc(x.name)} ${x.last_used?'— '+x.last_used:'— nie'}</span>`).join('')}</div></div>`:''}
+async function loadVolChart(){const d=await api('/api/analytics/history?days=90');const el=document.getElementById('volChart');if(!d.length)return el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Keine Daten.</p>';const mx=Math.max(...d.map(x=>x.total_volume))||1;el.innerHTML=d.slice(-20).map(x=>`<div class="cb-row"><span class="cb-label">${x.workout_date.slice(5)}</span><div class="cb-bar" style="width:${(x.total_volume/mx*100).toFixed(0)}%"></div><span class="cb-val">${Math.round(x.total_volume)}kg</span></div>`).join('')}
+async function loadAi(){const e=document.getElementById('aiTip');e.style.color='var(--t2)';e.textContent='Analysiert...';const q=document.getElementById('aiQ').value.trim();try{const r=await api('/api/ai/tips',{method:'POST',body:q?{query:q}:{}});e.style.color='var(--t)';e.style.fontStyle='normal';e.textContent=r.tip||'Keine Tipps.'}catch{e.textContent='Fehler'}document.getElementById('aiQ').value=''}
+
+// History — pro Trainingstag aufklappbar
+async function loadHistory(){
+  const days=await api('/api/workouts/sessions?limit=30');
+  const el=document.getElementById('histList');
+  if(!days.length)return el.innerHTML='<p style="color:var(--t2)">Noch keine Einträge.</p>';
+  el.innerHTML=days.map((d,idx)=>{
+    const dt=new Date(d.date+'T00:00:00');
+    const dateStr=dt.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+    return`<div class="hd" id="hd-${idx}"><div class="hd-top" onclick="toggleDay(${idx})"><div><div class="hd-date">${dateStr}</div><div class="hd-sub">${d.machine_count} Geräte · ${d.set_count} Sätze</div></div><span class="hd-arrow">▾</span></div><div class="hd-body">${d.machines.map(m=>renderHistMachine(m)).join('')}</div></div>`;
+  }).join('');
+}
+function toggleDay(idx){document.getElementById('hd-'+idx).classList.toggle('open')}
+function renderHistMachine(m){
+  const isCardio=m.category==='Cardio';
+  let badge,bs;
+  if(isCardio){badge='Cardio';bs='background:rgba(0,196,255,.12);color:var(--a2)'}
+  else if(m.method==='dropsatz'){badge='D · Drop';bs='background:var(--ad);color:var(--a)'}
+  else if(m.method==='negativ'){badge='N · Negativ'+(m.notes==='Links'?' · L':(m.notes==='Rechts'?' · R':''));bs='background:rgba(0,196,255,.12);color:var(--a2)'}
+  else{badge='O · Normal';bs='background:var(--s3);color:var(--t2)'}
+  const ids=m.sets.map(s=>s.id).join(',');
+  const sets=isCardio
+    ?m.sets.map(s=>`<span><b class="hw">${s.weight}</b> Min · <b>${s.reps}</b> km</span>`).join('')
+    :m.sets.map(s=>`<span><b class="hw">${s.weight}</b> kg × <b>${s.reps}</b></span>`).join('');
+  return`<div class="hm"><div class="hm-top">${m.machine_number?`<span class="qt-nr" style="font-size:.85rem">${esc(m.machine_number)}</span>`:''}<span style="font-weight:700;font-size:.9rem">${esc(m.name)}</span><span class="hm-badge" style="${bs}">${badge}</span><button class="wi-del" style="margin-left:auto" onclick="delHistGroup('${ids}')" title="Eintrag löschen">✕</button></div><div class="hm-sets">${sets}</div></div>`;
+}
+async function delHistGroup(ids){
+  if(!confirm('Diesen Eintrag (alle Sätze des Geräts an dem Tag) löschen?'))return;
+  for(const id of ids.split(','))await api(`/api/workouts/${id}`,{method:'DELETE'});
+  loadHistory();loadOverview();
+}
+
+// Analysis
+async function loadAnalysis(){const mid=document.getElementById('anaMachine').value;const el=document.getElementById('anaResult');if(!mid)return el.innerHTML='';const d=await api(`/api/analytics/machine/${mid}`);const p=d.progress,pr=d.personal_records;let ti='➡️',tc='trend-neutral',tt='Stabil';if(p.trend==='up'){ti='📈';tc='trend-up';tt='Aufwärts'}if(p.trend==='down'){ti='📉';tc='trend-down';tt='Abwärts'}
+el.innerHTML=`<div class="stats"><div class="stat"><div class="v ${tc}">${ti}</div><div class="l">${tt}</div></div><div class="stat"><div class="v">${pr.max_weight||0}<small style="font-size:.5em">kg</small></div><div class="l">Max</div></div></div>${p.volume_change_pct!==undefined?`<p style="font-size:.85rem">Volumen: <strong class="${tc}">${p.volume_change_pct>0?'+':''}${p.volume_change_pct}%</strong></p>`:''}`}
+
+// Modal close
+document.getElementById('planModal').addEventListener('click',e=>{if(e.target.classList.contains('mo'))closePlanModal()});
+document.getElementById('machineModal').addEventListener('click',e=>{if(e.target.classList.contains('mo'))closeMachineModal()});
+document.getElementById('addMachModal').addEventListener('click',e=>{if(e.target.classList.contains('mo'))closeAddMachineModal()});
+// wbModal: KEIN Schließen per Hintergrund-Tap — sonst wird das Training nicht gespeichert!
+
+// Init
+async function initApp(){
+  // Pausentimer aus localStorage laden
+  const savedTimer=localStorage.getItem('ft_pauseTimer');
+  if(savedTimer!==null){pauseTimerSecs=parseInt(savedTimer)||0;}
+  const sel=document.getElementById('pauseTimerSel');
+  if(sel)sel.value=String(pauseTimerSecs);
+  const firstBtn=document.querySelector('#bnav button');
+  document.querySelectorAll('#bnav button').forEach(x=>{x.querySelector('.ico').style.opacity=x===firstBtn?1:.4;x.querySelector('.lbl').style.color=x===firstBtn?'var(--a)':'var(--t3)'});
+  await loadMachines();await loadPlans();await loadOverview();loadHistory();loadVolChart();loadWbChart(30);
+}
+checkAuth();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+</script>
+</body>
+</html>
