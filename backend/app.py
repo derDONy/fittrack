@@ -1,4 +1,4 @@
-# FitTrack Backend — siehe APP_VERSION unten für aktuelle Versionsnummer
+# FitTrack Backend — siehe APP_VERSION zeile 13 für aktuelle Versionsnummer
 import os
 import json
 import sqlite3
