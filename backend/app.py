@@ -1,3 +1,4 @@
+# FitTrack Backend — siehe APP_VERSION unten für aktuelle Versionsnummer
 import os
 import json
 import sqlite3
@@ -8,6 +9,8 @@ import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
+
+APP_VERSION = "0.10.1"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -197,7 +200,7 @@ def init_db():
     # Create default user if no users exist
     count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     if count == 0:
-        default_user = os.environ.get('FITTRACK_USER', 'der_DONy')
+        default_user = os.environ.get('FITTRACK_USER', 'admin')
         default_pass = os.environ.get('FITTRACK_PASS', 'changeme')
         pw_hash = hash_password(default_pass)
         conn.execute(
@@ -351,7 +354,7 @@ def logout():
 @app.route('/api/auth/me', methods=['GET'])
 def auth_me():
     if session.get('user_id'):
-        return jsonify({"logged_in": True, "username": session['username']})
+        return jsonify({"logged_in": True, "username": session['username'], "version": APP_VERSION})
     return jsonify({"logged_in": False}), 401
 
 
