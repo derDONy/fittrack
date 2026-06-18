@@ -12,7 +12,7 @@ services:
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
-      - FITTRACK_USER=${FITTRACK_USER:-der_DONy}
+      - FITTRACK_USER=${FITTRACK_USER:-admin}
       - FITTRACK_PASS=${FITTRACK_PASS:-changeme}
       - TZ=Europe/Berlin
       # Notfall-Passwort-Reset: Wert eintragen, Container neu starten,
