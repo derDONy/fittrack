@@ -360,7 +360,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 
   <div class="card" style="margin-top:10px">
    <h3 style="font-size:.88rem;font-weight:700;margin-bottom:8px">📡 API-Endpunkte</h3>
-   <p style="font-size:.75rem;color:var(--t2);margin-bottom:8px">Basis-URL: <span style="font-family:var(--m);color:var(--a)">https://fit.wendt.cloud</span></p>
+   <p style="font-size:.75rem;color:var(--t2);margin-bottom:8px">Basis-URL: <span style="font-family:var(--m);color:var(--a)">https://deine-domain.example.com</span></p>
    <div style="font-family:var(--m);font-size:.72rem;color:var(--t3);line-height:2">
     <div><span style="color:var(--a2)">GET</span> /api/v1/summary?days=30</div>
     <div style="font-size:.65rem;color:var(--t3);padding-left:12px;margin-bottom:4px">Zusammenfassung pro Trainingstag</div>
@@ -418,7 +418,8 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
    </div>
   </div>
   <button class="btn-logout" onclick="doLogout()">Logout</button>
-  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v0.10.1 · 18.06.2026</div>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.10.1</span> · 18.06.2026</div>
+  <div id="versionMismatch" style="display:none;text-align:center;color:var(--w);font-size:.68rem;margin-top:4px">⚠️ Backend meldet v<span id="beVersion"></span> — Frontend/Backend nicht synchron!</div>
  </div>
 </div>
 
@@ -525,7 +526,17 @@ function loadPersistedTraining(){try{const d=JSON.parse(localStorage.getItem('ft
 function clearPersistedTraining(){try{localStorage.removeItem('ft_active')}catch{}}
 
 // Auth
-async function checkAuth(){try{const r=await fetch('/api/auth/me');const d=await r.json();if(d.logged_in){showApp(d.username);initApp()}else showLogin()}catch{showLogin()}}
+async function checkAuth(){try{const r=await fetch('/api/auth/me');const d=await r.json();if(d.logged_in){showApp(d.username);initApp();checkVersionSync(d.version)}else showLogin()}catch{showLogin()}}
+function checkVersionSync(beVersion){
+  if(!beVersion)return;
+  const feEl=document.getElementById('feVersion');
+  const feVersion=feEl?feEl.textContent.trim():'';
+  if(feVersion&&beVersion!==feVersion){
+    const mm=document.getElementById('versionMismatch');
+    const beEl=document.getElementById('beVersion');
+    if(mm&&beEl){beEl.textContent=beVersion;mm.style.display='block'}
+  }
+}
 let _lockoutTimer=null;
 function _startLockoutCountdown(secs){
   clearInterval(_lockoutTimer);
