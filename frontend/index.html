@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FitTrack v0.9.3 — 2026-06-15 -->
+<!-- FitTrack v0.10.1 — 2026-06-18 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0f">
+<script>(function(){try{var m=localStorage.getItem('ft_theme')||'system';var r=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;document.documentElement.setAttribute('data-theme',r);}catch(e){}})();</script>
 <title>FitTrack</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icons/favicon.png">
@@ -14,14 +15,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--s:#12121a;--s2:#1a1a26;--s3:#222233;--a:#00e5a0;--a2:#00c4ff;--ad:rgba(0,229,160,0.12);--d:#ff4466;--w:#ffaa00;--t:#e8e8f0;--t2:#8888a0;--t3:#555566;--r:14px;--f:'Space Grotesk',sans-serif;--m:'JetBrains Mono',monospace}
+:root{--bg:#0a0a0f;--s:#12121a;--s2:#1a1a26;--s3:#222233;--a:#00e5a0;--a2:#00c4ff;--ad:rgba(0,229,160,0.12);--d:#ff4466;--w:#ffaa00;--t:#e8e8f0;--t2:#8888a0;--t3:#555566;--r:14px;--f:'Space Grotesk',sans-serif;--m:'JetBrains Mono',monospace;--on-a:#0a0a0f;--a-dim:rgba(0,229,160,0.32);--a2-dim:rgba(0,196,255,0.32);--a2-tint:rgba(0,196,255,0.12);--w-dim:rgba(255,170,0,0.32);--w-tint:rgba(255,170,0,0.12)}
+:root[data-theme="light"]{--bg:#f5f6f8;--s:#ffffff;--s2:#eef0f4;--s3:#dde1e8;--a:#0a9d6e;--a2:#0a82b0;--ad:rgba(10,157,110,0.13);--d:#e11d48;--w:#b9760a;--t:#1a1c25;--t2:#5b5f6e;--t3:#9aa0ad;--on-a:#ffffff;--a-dim:rgba(10,157,110,0.30);--a2-dim:rgba(10,130,176,0.30);--a2-tint:rgba(10,130,176,0.13);--w-dim:rgba(185,118,10,0.32);--w-tint:rgba(185,118,10,0.14)}
+:root[data-theme="light"] .card,:root[data-theme="light"] .qt,:root[data-theme="light"] .stat,:root[data-theme="light"] .hd,:root[data-theme="light"] .ml-modal,:root[data-theme="light"] .login-b,:root[data-theme="light"] .neg,:root[data-theme="light"] .ai{box-shadow:0 1px 2px rgba(20,22,40,0.05),0 1px 3px rgba(20,22,40,0.05)}
+:root[data-theme="light"] .bnav{box-shadow:0 -1px 3px rgba(20,22,40,0.04)}
 html{font-size:16px;background:var(--bg)}body{font-family:var(--f);background:var(--bg);color:var(--t);min-height:100vh;-webkit-tap-highlight-color:transparent}
 input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 ::-webkit-scrollbar{width:0}
 
 /* Login */
 .login-w{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:max(20px,env(safe-area-inset-top,20px)) 20px 20px}
-.login-b{background:var(--s);border:1px solid var(--s3);border-radius:16px;padding:2rem 1.5rem;width:100%;max-width:360px;text-align:center}
+.login-b{background:var(--s);border:1px solid var(--s3);border-radius:16px;padding:2rem 1.5rem;width:100%;max-width:360px;text-align:center;position:relative}
+.theme-toggle{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:var(--s2);border:1px solid var(--s3);color:var(--t2);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:all .15s;line-height:1}
+.theme-toggle:active{border-color:var(--a)}
 .login-b h1{font-size:2rem;font-weight:800;margin-bottom:4px}
 .login-b h1 span{color:var(--a)}
 .login-b .sub{color:var(--t2);font-size:.85rem;margin-bottom:24px}
@@ -30,7 +36,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .fg label{display:block;font-size:.78rem;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
 .fg input,.fg select,.fg textarea{width:100%;padding:12px;background:var(--s2);border:1.5px solid var(--s3);border-radius:10px;color:var(--t);font-family:var(--f);font-size:1rem;outline:none;transition:border-color .15s}
 .fg input:focus,.fg select:focus{border-color:var(--a)}
-.btn-p{width:100%;padding:14px;background:var(--a);color:var(--bg);border:none;border-radius:10px;font-family:var(--f);font-size:1rem;font-weight:700;cursor:pointer}
+.btn-p{width:100%;padding:14px;background:var(--a);color:var(--on-a);border:none;border-radius:10px;font-family:var(--f);font-size:1rem;font-weight:700;cursor:pointer}
 
 /* Passwort anzeigen */
 .pw-wrap{position:relative}
@@ -58,17 +64,17 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 /* Plan chips */
 .chips{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
 .chip{padding:7px 14px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid var(--s3);background:var(--s);color:var(--t2);white-space:nowrap;flex-shrink:0;transition:all .15s}
-.chip.on{border-color:var(--a);background:var(--a);color:var(--bg)}
+.chip.on{border-color:var(--a);background:var(--a);color:var(--on-a)}
 
 /* Quick Training machine card */
 .qt{background:var(--s);border:1px solid var(--s3);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:all .2s}
 .qt.done{opacity:.45;border-color:rgba(0,229,160,.35)}
 .qt-top{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}
 .qt-del{width:26px;height:26px;border-radius:50%;background:var(--s3);border:none;color:var(--t3);cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.qt-del:active{background:var(--d);color:var(--bg)}
+.qt-del:active{background:var(--d);color:var(--on-a)}
 .qt-cb{width:26px;height:26px;border-radius:7px;border:2.5px solid var(--s3);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .qt-cb.on{background:var(--a);border-color:var(--a)}
-.qt-cb.on::after{content:'✓';color:var(--bg);font-weight:800;font-size:.8rem}
+.qt-cb.on::after{content:'✓';color:var(--on-a);font-weight:800;font-size:.8rem}
 .qt-info{flex:1;min-width:0}
 .qt-row1{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
 .qt-nr{font-size:1rem;font-family:var(--m);color:var(--t2);font-weight:700}
@@ -109,12 +115,12 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .neg-item{font-size:.78rem;background:rgba(255,170,0,.1);color:var(--w);padding:3px 8px;border-radius:5px}
 
 /* AI */
-.ai{background:linear-gradient(135deg,var(--s) 0%,#1a1a2e 100%);border:1px solid var(--ad);border-radius:12px;padding:14px;margin-bottom:12px}
+.ai{background:linear-gradient(135deg,var(--s) 0%,var(--s2) 100%);border:1px solid var(--ad);border-radius:12px;padding:14px;margin-bottom:12px}
 .ai h3{color:var(--a);font-size:.88rem;font-weight:700;margin-bottom:8px}
 .ai-text{font-size:.82rem;line-height:1.65;white-space:pre-wrap}
 .ai-row{display:flex;gap:6px;margin-top:10px}
 .ai-row input{flex:1;padding:10px 12px;background:var(--s2);border:1px solid var(--s3);border-radius:10px;color:var(--t);font-family:var(--f);font-size:.85rem;outline:none}
-.ai-btn{padding:10px 16px;background:var(--a);color:var(--bg);border:none;border-radius:10px;font-family:var(--f);font-size:.78rem;font-weight:700;cursor:pointer}
+.ai-btn{padding:10px 16px;background:var(--a);color:var(--on-a);border:none;border-radius:10px;font-family:var(--f);font-size:.78rem;font-weight:700;cursor:pointer}
 
 /* Chart bars */
 .cb-row{display:flex;align-items:center;gap:5px;margin-bottom:4px}
@@ -172,7 +178,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .mo-h{font-size:1.1rem;font-weight:700;margin-bottom:12px}
 .mo-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 .mo-btn{padding:10px 20px;border:none;border-radius:10px;font-family:var(--f);font-size:.85rem;font-weight:600;cursor:pointer}
-.mo-btn-p{background:var(--a);color:var(--bg)}.mo-btn-s{background:var(--s3);color:var(--t)}
+.mo-btn-p{background:var(--a);color:var(--on-a)}.mo-btn-s{background:var(--s3);color:var(--t)}
 
 /* Machine picker */
 .mp{max-height:40vh;overflow-y:auto;border:1px solid var(--s3);border-radius:10px;padding:6px}
@@ -180,7 +186,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .mp-item{display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:.9rem}
 .mp-item:active{background:var(--s2)}
 .mp-cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--s3);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
-.mp-item.sel .mp-cb{background:var(--a);border-color:var(--a);color:var(--bg)}
+.mp-item.sel .mp-cb{background:var(--a);border-color:var(--a);color:var(--on-a)}
 
 .save-msg{text-align:center;margin-top:8px;color:var(--a);font-weight:700;min-height:1.4rem}
 .legend{display:flex;gap:12px;justify-content:center;margin-top:10px;font-size:.65rem;color:var(--t3)}
@@ -213,7 +219,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 /* Sort buttons */
 .qt-sort{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
 .qt-sort button{width:24px;height:24px;border-radius:5px;background:var(--s3);border:none;color:var(--t3);cursor:pointer;font-size:.62rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.qt-sort button:active{background:var(--a2);color:var(--bg)}
+.qt-sort button:active{background:var(--a2);color:var(--on-a)}
 </style>
 </head>
 <body>
@@ -221,6 +227,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 <!-- Login -->
 <div id="loginScreen" class="login-w">
  <div class="login-b">
+  <button class="theme-toggle" id="loginThemeToggle" type="button" onclick="toggleThemeQuick()" title="Hell / Dunkel">🌙</button>
   <div style="font-size:48px;margin-bottom:16px">💪</div>
   <h1>Fit<span>Track</span></h1>
   <p class="sub">Dein Fitness Tracker</p>
@@ -243,6 +250,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
   <button data-tab="plan"><span class="ico">🏋️</span><span class="lbl">Training</span></button>
   <button data-tab="dash"><span class="ico">📊</span><span class="lbl">Stats</span></button>
   <button data-tab="history"><span class="ico">📋</span><span class="lbl">Verlauf</span></button>
+  <button data-tab="api"><span class="ico">🔑</span><span class="lbl">API</span></button>
   <button data-tab="more"><span class="ico">⚙️</span><span class="lbl">Mehr</span></button>
  </div>
 
@@ -290,21 +298,34 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
    <div class="ai-text" id="aiTip"><button class="ai-btn" onclick="loadAi()">🔍 Analyse starten</button></div>
    <div class="ai-row"><input type="text" id="aiQ" placeholder="Frag den Coach..."><button class="ai-btn" onclick="loadAi()">Fragen</button></div>
   </div>
-  <div class="card"><h3 style="font-size:.85rem;color:var(--t2);margin-bottom:10px">Volumen (90 Tage)</h3><div id="volChart"></div></div>
-  <div class="card" style="margin-top:10px">
-   <h3 style="font-size:.85rem;color:var(--t2);margin-bottom:10px">Befinden</h3>
+  <div class="card">
+   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+    <h3 style="font-size:.85rem;color:var(--t2);margin:0">Volumen</h3>
+    <span id="volPeriodLabel" style="font-size:.7rem;color:var(--t3);font-family:var(--m)"></span>
+   </div>
    <div class="wb-period">
-    <button class="sel" onclick="loadWbChart(30,this)">30 Tage</button>
-    <button onclick="loadWbChart(90,this)">90 Tage</button>
-    <button onclick="loadWbChart(240,this)">8 Monate</button>
+    <button class="sel" onclick="setVolPeriod(30,this)">30 T</button>
+    <button onclick="setVolPeriod(90,this)">3 M</button>
+    <button onclick="setVolPeriod(180,this)">6 M</button>
+    <button onclick="setVolPeriod(365,this)">12 M</button>
    </div>
+   <div id="volStats" class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:10px;margin-bottom:12px"></div>
+   <div id="volChart"></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+    <h3 id="wbTitle" style="font-size:.85rem;color:var(--t2);margin:0">Befinden</h3>
+    <span id="wbPeriodLabel" style="font-size:.7rem;color:var(--t3);font-family:var(--m)"></span>
+   </div>
+   <div class="wb-period">
+    <button class="sel" onclick="loadWbChart(30,this)">30 T</button>
+    <button onclick="loadWbChart(90,this)">3 M</button>
+    <button onclick="loadWbChart(180,this)">6 M</button>
+    <button onclick="loadWbChart(365,this)">12 M</button>
+   </div>
+   <div id="wbTiles" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;margin-bottom:12px"></div>
    <div id="wbChart"></div>
-   <div class="wb-legend">
-    <span><span class="wb-dot" style="background:#00e5a0"></span>Befinden</span>
-    <span><span class="wb-dot" style="background:#00c4ff"></span>Schlaf</span>
-    <span><span class="wb-dot" style="background:#ffaa00"></span>Gelenke</span>
-    <span><span class="wb-dot" style="background:#8888a0"></span>Trinken</span>
-   </div>
+   <p style="font-size:.6rem;color:var(--t3);text-align:center;margin-top:8px">höher = besser</p>
   </div>
  </div>
 
@@ -312,6 +333,47 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
  <div id="tab-history" class="tc fi">
   <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:12px">Verlauf</h2>
   <div id="histList"></div>
+ </div>
+
+ <!-- API -->
+ <div id="tab-api" class="tc fi">
+  <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:4px">API-Zugang</h2>
+  <p style="font-size:.78rem;color:var(--t2);margin-bottom:12px">Tokens für externen Zugriff (z.B. Cowork). Ein Token wird nur einmal angezeigt — sicher aufbewahren!</p>
+
+  <div class="card">
+   <h3 style="color:var(--a);font-size:.88rem;font-weight:700;margin-bottom:12px">🔑 Neuer Token</h3>
+   <div class="fg"><label>Name / Zweck</label><input type="text" id="apiTokenName" placeholder="z.B. Cowork, Claude Projekt"></div>
+   <button class="mo-btn mo-btn-p" onclick="createApiToken()" style="width:100%">Token erstellen</button>
+
+   <!-- Neuer Token Anzeige (einmalig) -->
+   <div id="newTokenBox" style="display:none;margin-top:12px;background:var(--s2);border:1.5px solid var(--a);border-radius:10px;padding:12px">
+    <div style="font-size:.75rem;color:var(--a);font-weight:700;margin-bottom:6px">✅ Token erstellt — NUR JETZT sichtbar!</div>
+    <div style="font-family:var(--m);font-size:.78rem;word-break:break-all;color:var(--t);margin-bottom:8px" id="newTokenValue"></div>
+    <button class="mo-btn mo-btn-s" style="width:100%;padding:8px" onclick="copyToken()">📋 Kopieren</button>
+   </div>
+  </div>
+
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">📋 Aktive Tokens</h3>
+   <div id="tokenList"><p style="color:var(--t2);font-size:.82rem">Laden…</p></div>
+  </div>
+
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:8px">📡 API-Endpunkte</h3>
+   <p style="font-size:.75rem;color:var(--t2);margin-bottom:8px">Basis-URL: <span style="font-family:var(--m);color:var(--a)">https://fit.wendt.cloud</span></p>
+   <div style="font-family:var(--m);font-size:.72rem;color:var(--t3);line-height:2">
+    <div><span style="color:var(--a2)">GET</span> /api/v1/summary?days=30</div>
+    <div style="font-size:.65rem;color:var(--t3);padding-left:12px;margin-bottom:4px">Zusammenfassung pro Trainingstag</div>
+    <div><span style="color:var(--a2)">GET</span> /api/v1/workouts?days=30</div>
+    <div style="font-size:.65rem;color:var(--t3);padding-left:12px;margin-bottom:4px">Alle Workout-Einträge</div>
+    <div><span style="color:var(--a2)">GET</span> /api/v1/wellbeing?days=30</div>
+    <div style="font-size:.65rem;color:var(--t3);padding-left:12px;margin-bottom:4px">Befinden-Daten</div>
+   </div>
+   <div style="margin-top:10px;padding:10px;background:var(--s2);border-radius:8px">
+    <div style="font-size:.72rem;color:var(--t2);margin-bottom:4px">Header für alle Anfragen:</div>
+    <div style="font-family:var(--m);font-size:.72rem;color:var(--a)">Authorization: Bearer ft_dein_token</div>
+   </div>
+  </div>
  </div>
 
  <!-- MORE -->
@@ -347,8 +409,16 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
     </select>
    </div>
   </div>
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">🎨 Darstellung</h3>
+   <div class="wb-period" id="themeSeg" style="margin-bottom:0">
+    <button data-theme-mode="light">☀️ Hell</button>
+    <button data-theme-mode="dark">🌙 Dunkel</button>
+    <button data-theme-mode="system">🖥️ System</button>
+   </div>
+  </div>
   <button class="btn-logout" onclick="doLogout()">Logout</button>
-  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v0.9.3 · 15.06.2026</div>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v0.10.1 · 18.06.2026</div>
  </div>
 </div>
 
@@ -480,6 +550,7 @@ document.querySelectorAll('#bnav button').forEach(b=>b.addEventListener('click',
   document.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+b.dataset.tab).classList.add('on');
   document.querySelectorAll('#bnav button').forEach(x=>{x.querySelector('.ico').style.opacity=x===b?1:.4;x.querySelector('.lbl').style.color=x===b?'var(--a)':'var(--t3)'});
+  if(b.dataset.tab==='api')loadApiTokens();
 }));
 
 // Machines
@@ -746,14 +817,16 @@ function renderMachineCard(pm){
       // Negativsatz (index 2) mit L/R
       const lw2=lastDrops[2]?.weight||'';
       const curW2=st.d[2]?.w||'';const curRL=st.d[2]?.rL||'';const curRR=st.d[2]?.rR||'';
-      body+=`<div class="qt-drop"><div class="qt-drop-label">Negativ</div><input class="qt-inp ${curW2?'has':''}" id="w-${mid}-2" type="number" inputmode="decimal" placeholder="${lw2||'kg'}" value="${curW2}" oninput="onWeightInput(${mid},2,this.value)"><div style="height:4px"></div><div class="qt-lr-label">L</div><input class="qt-inp ${curRL?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRL}" oninput="qtState[${mid}].d[2].rL=this.value;this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"><div style="height:3px"></div><div class="qt-lr-label">R</div><input class="qt-inp ${curRR?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRR}" oninput="qtState[${mid}].d[2].rR=this.value;this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"></div>`;
+      body+=`<div class="qt-drop"><div class="qt-drop-label">Negativ</div><input class="qt-inp ${curW2?'has':''}" id="w-${mid}-2" type="number" inputmode="decimal" placeholder="${lw2||'kg'}" value="${curW2}" oninput="onWeightInput(${mid},2,this.value)"><div style="height:4px"></div><div class="qt-lr-label">L</div><input class="qt-inp ${curRL?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRL}" oninput="qtState[${mid}].d[2].rL=this.value;this.classList.toggle('has',!!this.value);persistTraining()"><div style="height:3px"></div><div class="qt-lr-label">R</div><input class="qt-inp ${curRR?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRR}" oninput="qtState[${mid}].d[2].rR=this.value;this.classList.toggle('has',!!this.value);persistTraining()"></div>`;
       body+=`</div>`;
     } else {
       // D, O und N-Zusammen: alle 3 Felder mit Gewicht + Wdh
+      // Timer: nur bei O (Normal) und N (Negativ); NICHT bei D (Dropsatz - kein Pausenmoment)
+      const timerCall=m==='d'?'':'if(this.value)startPauseTimer();';
       body+=`<div class="qt-drops">${[0,1,2].map(i=>{
         const lw=lastDrops[i]?.weight||'';const lr=lastDrops[i]?.reps||'';
         const curW=st.d[i]?.w||'';const curR=st.d[i]?.r||'';
-        return`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorRep(this,${lr||0});this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"></div>`;
+        return`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorRep(this,${lr||0});this.classList.toggle('has',!!this.value);${timerCall}persistTraining()"></div>`;
       }).join('')}</div>`;
     }
   }
@@ -916,33 +989,42 @@ async function finishSaveQt(){
 }
 
 // Wellbeing Chart
+// ── Befinden / Schlaf / Gelenke (einzeln umschaltbar) ──
+let wbPeriod=30,wbMetric='mood',wbRaw=null;
+const WB_METRICS={
+  mood:{label:'Befinden',color:'var(--a)',dim:'var(--a-dim)',tint:'var(--ad)',maxR:4},
+  sleep:{label:'Schlaf',color:'var(--a2)',dim:'var(--a2-dim)',tint:'var(--a2-tint)',maxR:4},
+  joints:{label:'Gelenke',color:'var(--w)',dim:'var(--w-dim)',tint:'var(--w-tint)',maxR:3}
+};
+function wbScore(v,maxR){return v?Math.round((maxR-v)/(maxR-1)*100):null}
 async function loadWbChart(days=30,btn){
   if(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel')}
+  wbPeriod=days;
+  try{wbRaw=await api(`/api/wellbeing?days=${days}`)}catch{wbRaw=[];document.getElementById('wbChart').innerHTML='<p style="color:var(--t2);font-size:.82rem">Fehler beim Laden.</p>';return}
+  renderWbChart();
+}
+function setWbMetric(k){wbMetric=k;renderWbChart()}
+function renderWbChart(){
+  const m=WB_METRICS[wbMetric];
+  document.getElementById('wbTitle').textContent=m.label;
+  document.getElementById('wbPeriodLabel').textContent=periodName(wbPeriod)+(wbPeriod>=180?' · pro Woche':'');
+  const items=(wbRaw||[]).map(x=>({date:new Date(x.log_date+'T00:00:00'),mood:x.mood,sleep:x.sleep,joints:x.joints})).sort((a,b)=>a.date-b.date);
+  // Kacheln = Tabs
+  document.getElementById('wbTiles').innerHTML=['mood','sleep','joints'].map(k=>{
+    const mm=WB_METRICS[k],a=k===wbMetric;
+    const sc=items.map(x=>wbScore(x[k],mm.maxR)).filter(x=>x!=null);
+    const avg=sc.length?Math.round(sc.reduce((p,c)=>p+c,0)/sc.length):0;
+    return `<button onclick="setWbMetric('${k}')" style="background:${a?mm.tint:'var(--s2)'};border:1.5px solid ${a?mm.color:'transparent'};border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;font-family:var(--f);transition:all .15s"><div style="font-size:1.25rem;font-weight:700;font-family:var(--m);line-height:1.1;color:${mm.color}">${avg}<span style="font-size:.6rem;color:var(--t3)">/100</span></div><div style="font-size:.62rem;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:4px">${mm.label}</div></button>`;
+  }).join('');
   const el=document.getElementById('wbChart');
-  try{
-    const data=await api(`/api/wellbeing?days=${days}`);
-    if(!data.length){el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Noch keine Befinden-Daten.</p>';return}
-    // Render bars — lower value = better, so we invert for display (4-val+1 for mood/sleep, 4-val for joints)
-    const maxH=120;
-    let html='<div style="display:flex;align-items:flex-end;gap:2px;height:'+maxH+'px;overflow-x:auto;padding-bottom:22px;position:relative">';
-    data.forEach(d=>{
-      const mood=d.mood?(5-d.mood)/4:0;
-      const sleep=d.sleep?(5-d.sleep)/4:0;
-      const joints=d.joints?(4-d.joints)/3:0;
-      const hydra=d.hydration?Math.min(d.hydration/2,1):0;
-      const bw=Math.max(12,Math.floor(500/data.length)-2);
-      const dt=d.log_date.slice(5);
-      html+=`<div style="display:flex;gap:1px;align-items:flex-end;flex-shrink:0;position:relative" title="${d.log_date}">`;
-      html+=`<div style="width:${bw/4}px;height:${Math.max(2,mood*maxH*.85)}px;background:#00e5a0;border-radius:2px 2px 0 0"></div>`;
-      html+=`<div style="width:${bw/4}px;height:${Math.max(2,sleep*maxH*.85)}px;background:#00c4ff;border-radius:2px 2px 0 0"></div>`;
-      html+=`<div style="width:${bw/4}px;height:${Math.max(2,joints*maxH*.85)}px;background:#ffaa00;border-radius:2px 2px 0 0"></div>`;
-      html+=`<div style="width:${bw/4}px;height:${Math.max(2,hydra*maxH*.85)}px;background:#8888a0;border-radius:2px 2px 0 0"></div>`;
-      html+=`<span style="position:absolute;bottom:-18px;left:0;font-size:.55rem;font-family:var(--m);color:var(--t3);white-space:nowrap">${dt}</span>`;
-      html+=`</div>`;
-    });
-    html+='</div>';
-    el.innerHTML=html;
-  }catch{el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Fehler beim Laden.</p>'}
+  if(!items.length){el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Noch keine Befinden-Daten.</p>';return}
+  const weekly=wbPeriod>=180;
+  const groups=weekly?weeklyGroups(items):items.map(x=>[x]);
+  const vals=groups.map(g=>{const s=g.map(x=>wbScore(x[wbMetric],m.maxR)).filter(x=>x!=null);return{v:s.length?Math.round(s.reduce((p,c)=>p+c,0)/s.length):0,date:g[0].date}});
+  const mean=Math.round(vals.reduce((a,b)=>a+b.v,0)/vals.length);
+  const ml=monthLabeler();
+  const bars=vals.map(x=>({title:`${x.date.getDate()}.${x.date.getMonth()+1}. — ${x.v}/100`,monthLabel:ml(x.date),style:`width:100%;height:${Math.max(3,x.v)}%;background:${x.v>=mean?m.color:m.dim};border-radius:2px 2px 0 0;min-height:3px`}));
+  el.innerHTML=barChartHTML(bars,Math.round(mean/100*150),'Ø '+mean,'var(--t2)',m.color,150);
 }
 
 // Plan modal
@@ -957,7 +1039,48 @@ async function savePlan(){const id=document.getElementById('editPlanId').value;c
 // Dashboard
 async function loadOverview(){const o=await api('/api/analytics/overview');document.getElementById('statsRow').innerHTML=`<div class="stat"><div class="v">${o.total_workouts}</div><div class="l">Gesamt</div></div><div class="stat"><div class="v">${o.workouts_this_week}</div><div class="l">Diese Woche</div></div><div class="stat"><div class="v">${o.workouts_this_month}</div><div class="l">30 Tage</div></div><div class="stat"><div class="v">${o.active_days_this_month}</div><div class="l">Trainingstage</div></div>`;
   const n=o.neglected_machines||[];document.getElementById('negBanner').innerHTML=n.length?`<div class="neg"><h3>⚠️ Vernachlässigt (&gt;14 Tage)</h3><div class="neg-list">${n.map(x=>`<span class="neg-item">${esc(x.name)} ${x.last_used?'— '+x.last_used:'— nie'}</span>`).join('')}</div></div>`:''}
-async function loadVolChart(){const d=await api('/api/analytics/history?days=90');const el=document.getElementById('volChart');if(!d.length)return el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Keine Daten.</p>';const mx=Math.max(...d.map(x=>x.total_volume))||1;el.innerHTML=d.slice(-20).map(x=>`<div class="cb-row"><span class="cb-label">${x.workout_date.slice(5)}</span><div class="cb-bar" style="width:${(x.total_volume/mx*100).toFixed(0)}%"></div><span class="cb-val">${Math.round(x.total_volume)}kg</span></div>`).join('')}
+// ── Volumen + gemeinsame Chart-Helfer ──
+const CHART_MN=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+let volPeriod=30,volRaw=null;
+function fmtNum(n){return Math.round(n).toLocaleString('de-DE')}
+function periodName(p){return({30:'30 Tage',90:'3 Monate',180:'6 Monate',365:'12 Monate'})[p]||p+' Tage'}
+function weeklyGroups(items){
+  if(!items.length)return[];
+  const start=items[0].date,b={};
+  items.forEach(x=>{const w=Math.floor((x.date-start)/6.048e8);(b[w]=b[w]||[]).push(x)});
+  return Object.keys(b).sort((a,c)=>a-c).map(k=>b[k]);
+}
+function monthLabeler(){let last=-1;return d=>{const mo=d.getMonth();if(mo!==last){last=mo;return CHART_MN[mo]}return''}}
+function barChartHTML(bars,avgPx,avgPill,lineColor,pillColor,h){
+  let s='<div style="position:relative"><div style="overflow-x:auto;overflow-y:hidden"><div style="min-width:100%">';
+  s+=`<div style="display:flex;align-items:flex-end;gap:1px;height:${h}px">`;
+  bars.forEach(b=>{s+=`<div title="${b.title}" style="flex:1;min-width:6px;height:100%;display:flex;flex-direction:column;justify-content:flex-end"><div style="${b.style}"></div></div>`});
+  s+='</div><div style="display:flex;gap:1px;height:16px;margin-top:3px">';
+  bars.forEach(b=>{s+=`<div style="flex:1;min-width:6px;font-size:.56rem;font-family:var(--m);color:var(--t3);white-space:nowrap;overflow:visible">${b.monthLabel}</div>`});
+  s+='</div></div></div>';
+  s+=`<div style="position:absolute;left:0;right:0;top:${h-avgPx}px;height:0;border-top:1.5px dashed ${lineColor};pointer-events:none;z-index:2"><span style="position:absolute;right:0;top:-9px;background:${pillColor};color:var(--on-a);font-size:.58rem;font-weight:700;font-family:var(--m);padding:1px 6px;border-radius:4px;white-space:nowrap">${avgPill}</span></div>`;
+  return s+'</div>';
+}
+function setVolPeriod(p,btn){volPeriod=p;if(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel')}loadVolChart()}
+async function loadVolChart(){
+  try{volRaw=await api(`/api/analytics/history?days=${volPeriod}`)}catch{volRaw=[]}
+  renderVolChart();
+}
+function renderVolChart(){
+  const el=document.getElementById('volChart');
+  document.getElementById('volPeriodLabel').textContent=periodName(volPeriod)+(volPeriod>=180?' · pro Woche':'');
+  const items=(volRaw||[]).map(x=>({date:new Date(x.workout_date+'T00:00:00'),vol:x.total_volume||0})).sort((a,b)=>a.date-b.date);
+  if(!items.length){document.getElementById('volStats').innerHTML='';el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Keine Daten.</p>';return}
+  const total=items.reduce((a,b)=>a+b.vol,0),days=items.length,avgTrain=Math.round(total/days);
+  document.getElementById('volStats').innerHTML=`<div class="stat"><div class="v">${fmtNum(total)}</div><div class="l">Gesamt kg</div></div><div class="stat"><div class="v" style="color:var(--a2)">${fmtNum(avgTrain)}</div><div class="l">Ø / Training</div></div><div class="stat"><div class="v" style="color:var(--t)">${days}</div><div class="l">Trainingstage</div></div>`;
+  const weekly=volPeriod>=180;
+  const groups=weekly?weeklyGroups(items):items.map(x=>[x]);
+  const vals=groups.map(g=>({v:g.reduce((a,b)=>a+b.vol,0),date:g[0].date}));
+  const max=Math.max(1,...vals.map(x=>x.v)),mean=Math.round(vals.reduce((a,b)=>a+b.v,0)/vals.length);
+  const ml=monthLabeler();
+  const bars=vals.map(x=>({title:`${x.date.getDate()}.${x.date.getMonth()+1}. — ${fmtNum(x.v)} kg`,monthLabel:ml(x.date),style:`width:100%;height:${Math.max(3,Math.round(x.v/max*100))}%;background:${x.v>=mean?'var(--a)':'var(--a-dim)'};border-radius:2px 2px 0 0;min-height:3px`}));
+  el.innerHTML=barChartHTML(bars,Math.round(mean/max*150),'Ø '+fmtNum(mean),'var(--a2)','var(--a2)',150);
+}
 async function loadAi(){const e=document.getElementById('aiTip');e.style.color='var(--t2)';e.textContent='Analysiert...';const q=document.getElementById('aiQ').value.trim();try{const r=await api('/api/ai/tips',{method:'POST',body:q?{query:q}:{}});e.style.color='var(--t)';e.style.fontStyle='normal';e.textContent=r.tip||'Keine Tipps.'}catch{e.textContent='Fehler'}document.getElementById('aiQ').value=''}
 
 // History — pro Trainingstag aufklappbar
@@ -991,6 +1114,64 @@ async function delHistGroup(ids){
   loadHistory();loadOverview();
 }
 
+// ── API Tokens ──
+let _currentRawToken = '';
+
+async function loadApiTokens() {
+  const el = document.getElementById('tokenList');
+  if (!el) return;
+  try {
+    const tokens = await api('/api/tokens');
+    if (!tokens.length) {
+      el.innerHTML = '<p style="color:var(--t2);font-size:.82rem">Noch keine Tokens.</p>';
+      return;
+    }
+    el.innerHTML = tokens.map(t => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s3)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.88rem;font-weight:700">${esc(t.name)}</div>
+          <div style="font-family:var(--m);font-size:.72rem;color:var(--t3)">${esc(t.token_prefix)} · ${t.scopes}</div>
+          <div style="font-size:.68rem;color:var(--t3)">Erstellt: ${t.created_at.slice(0,10)}${t.last_used ? ' · Zuletzt: ' + t.last_used.slice(0,10) : ''}</div>
+        </div>
+        <button class="ml-btn" style="background:transparent;border:1px solid var(--d);color:var(--d);border-radius:8px;width:auto;padding:5px 10px;font-size:.72rem" onclick="deleteApiToken(${t.id}, '${esc(t.name)}')">Widerrufen</button>
+      </div>`).join('');
+  } catch {
+    el.innerHTML = '<p style="color:var(--d);font-size:.82rem">Fehler beim Laden.</p>';
+  }
+}
+
+async function createApiToken() {
+  const name = document.getElementById('apiTokenName').value.trim();
+  if (!name) return alert('Bitte einen Namen eingeben.');
+  try {
+    const r = await api('/api/tokens', { method: 'POST', body: { name, scopes: 'read' } });
+    if (r.token) {
+      _currentRawToken = r.token;
+      document.getElementById('newTokenValue').textContent = r.token;
+      document.getElementById('newTokenBox').style.display = 'block';
+      document.getElementById('apiTokenName').value = '';
+      loadApiTokens();
+    }
+  } catch {
+    alert('Fehler beim Erstellen des Tokens.');
+  }
+}
+
+function copyToken() {
+  if (!_currentRawToken) return;
+  navigator.clipboard.writeText(_currentRawToken).then(() => {
+    const btn = document.querySelector('#newTokenBox button');
+    if (btn) { btn.textContent = '✅ Kopiert!'; setTimeout(() => btn.textContent = '📋 Kopieren', 2000); }
+  });
+}
+
+async function deleteApiToken(id, name) {
+  if (!confirm(`Token "${name}" widerrufen?\n\nDanach funktionieren alle Anfragen damit nicht mehr.`)) return;
+  await api(`/api/tokens/${id}`, { method: 'DELETE' });
+  document.getElementById('newTokenBox').style.display = 'none';
+  loadApiTokens();
+}
+
 // Analysis
 async function loadAnalysis(){const mid=document.getElementById('anaMachine').value;const el=document.getElementById('anaResult');if(!mid)return el.innerHTML='';const d=await api(`/api/analytics/machine/${mid}`);const p=d.progress,pr=d.personal_records;let ti='➡️',tc='trend-neutral',tt='Stabil';if(p.trend==='up'){ti='📈';tc='trend-up';tt='Aufwärts'}if(p.trend==='down'){ti='📉';tc='trend-down';tt='Abwärts'}
 el.innerHTML=`<div class="stats"><div class="stat"><div class="v ${tc}">${ti}</div><div class="l">${tt}</div></div><div class="stat"><div class="v">${pr.max_weight||0}<small style="font-size:.5em">kg</small></div><div class="l">Max</div></div></div>${p.volume_change_pct!==undefined?`<p style="font-size:.85rem">Volumen: <strong class="${tc}">${p.volume_change_pct>0?'+':''}${p.volume_change_pct}%</strong></p>`:''}`}
@@ -1000,6 +1181,22 @@ document.getElementById('planModal').addEventListener('click',e=>{if(e.target.cl
 document.getElementById('machineModal').addEventListener('click',e=>{if(e.target.classList.contains('mo'))closeMachineModal()});
 document.getElementById('addMachModal').addEventListener('click',e=>{if(e.target.classList.contains('mo'))closeAddMachineModal()});
 // wbModal: KEIN Schließen per Hintergrund-Tap — sonst wird das Training nicht gespeichert!
+
+// ── Theme (Hell/Dunkel/System) ──
+function resolveTheme(mode){return mode==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):mode}
+function applyTheme(){
+  const mode=localStorage.getItem('ft_theme')||'system';
+  const resolved=resolveTheme(mode);
+  document.documentElement.setAttribute('data-theme',resolved);
+  const mc=document.querySelector('meta[name="theme-color"]');if(mc)mc.content=resolved==='light'?'#f5f6f8':'#0a0a0f';
+  const lt=document.getElementById('loginThemeToggle');if(lt)lt.textContent=resolved==='light'?'☀️':'🌙';
+  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('sel',b.dataset.themeMode===mode));
+}
+function setTheme(mode){try{localStorage.setItem('ft_theme',mode)}catch{}applyTheme()}
+function toggleThemeQuick(){const cur=document.documentElement.getAttribute('data-theme')||resolveTheme(localStorage.getItem('ft_theme')||'system');setTheme(cur==='light'?'dark':'light')}
+document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.themeMode)));
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if((localStorage.getItem('ft_theme')||'system')==='system')applyTheme()})}catch{}
+applyTheme();
 
 // Init
 async function initApp(){
