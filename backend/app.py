@@ -1,4 +1,4 @@
-# FitTrack Backend — siehe APP_VERSION zeile 13 für aktuelle Versionsnummer
+# FitTrack Backend — siehe APP_VERSION unten für aktuelle Versionsnummer
 import os
 import json
 import sqlite3
@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.10.1"
+APP_VERSION = "0.10.2"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -997,6 +997,26 @@ def delete_token(token_id):
 
 # ── Public API (Token-Auth) ─────────────────────────────────────────────────
 
+# Klartext-Labels für Befinden-Werte, damit externe Tools (z.B. Cowork) die
+# rohen Zahlen ohne Kenntnis des Frontend-Codes korrekt einordnen können.
+# Müssen mit den Optionen im Frontend (index.html, Befinden-Modal) übereinstimmen.
+WB_MOOD_LABELS = {1: "Super", 2: "Gut", 3: "Okay", 4: "Schlecht"}
+WB_SLEEP_LABELS = {1: "Sehr gut", 2: "Gut", 3: "Mäßig", 4: "Schlecht"}
+WB_JOINTS_LABELS = {1: "Kein Problem", 2: "Leicht steif", 3: "Schmerzhaft"}
+
+
+def _wb_labels(d):
+    """Ergänzt ein Befinden-Dict um Klartext-Labels. hydration ist ein Wert in
+    Litern (0.5/1/1.5/2), höher = mehr getrunken. Erwartet ein dict oder None."""
+    if not d:
+        return d
+    d['mood_label'] = WB_MOOD_LABELS.get(d.get('mood'))
+    d['sleep_label'] = WB_SLEEP_LABELS.get(d.get('sleep'))
+    d['joints_label'] = WB_JOINTS_LABELS.get(d.get('joints'))
+    d['hydration_unit'] = 'liters'
+    return d
+
+
 @app.route('/api/v1/summary', methods=['GET'])
 @api_read_required
 def api_summary():
@@ -1081,7 +1101,7 @@ def api_summary():
             'set_count': sum(len(machine_groups[k]['sets']) for k in machine_order if machine_groups[k]['category'] != 'Cardio'),
             'machines': strength_machines,
             'cardio': cardio,
-            'wellbeing': dict(wb) if wb else None
+            'wellbeing': _wb_labels(dict(wb)) if wb else None
         })
 
     conn.close()
@@ -1117,10 +1137,7 @@ def api_wellbeing():
         (start,)
     ).fetchall()
     conn.close()
-    return jsonify([dict(r) for r in rows])
-
-
-# ── Run ─────────────────────────────────────────────────────────────────────
+    return jsonify([_wb_labels(dict(r)) for r in rows])
 
 # init_db() hier aufrufen, damit es sowohl unter Gunicorn als auch direkt funktioniert
 init_db()
