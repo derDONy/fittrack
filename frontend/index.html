@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FitTrack v0.10.2 — 2026-06-22 -->
+<!-- FitTrack v0.10.4 — 2026-06-22 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -212,10 +212,22 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .wb-period button{flex:1;padding:6px;border:1.5px solid var(--s3);border-radius:8px;background:var(--bg);color:var(--t2);font-family:var(--f);font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s}
 .wb-period button.sel{border-color:var(--a);background:var(--ad);color:var(--a)}
 /* Pause Toast */
-.pause-toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--s2);border:1.5px solid var(--a);border-radius:14px;padding:10px 18px;display:flex;align-items:center;gap:14px;z-index:60;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,229,160,.25)}
-.pause-toast.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+.pause-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);background:var(--s2);border:1.5px solid var(--a);border-radius:14px;padding:10px 18px;display:flex;align-items:center;gap:14px;z-index:60;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,229,160,.25)}
+.pause-toast.show{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
 .pause-toast-time{font-family:var(--m);font-size:1.3rem;font-weight:700;color:var(--a)}
 .pause-toast-btn{background:var(--s3);border:none;color:var(--t);padding:6px 14px;border-radius:8px;font-family:var(--f);font-size:.8rem;font-weight:700;cursor:pointer}
+/* Halten / Stoppuhr (z.B. Plank) */
+.qt-hold-sets{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.qt-hold-row{display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:8px;padding:8px 12px}
+.qt-hold-lbl{font-size:.8rem;color:var(--t2);font-weight:600}
+.qt-hold-time{font-family:var(--m);color:var(--a);font-weight:700;font-size:1.05rem;margin-left:auto}
+.qt-hold-x{background:none;border:none;color:var(--t3);font-size:.85rem;cursor:pointer;padding:2px 4px}
+.qt-hold-clock-wrap{text-align:center;margin:8px 0 12px}
+.qt-hold-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--d);margin-right:8px;vertical-align:middle}
+.qt-hold-clock{font-family:var(--m);font-size:2.2rem;font-weight:700;color:var(--t);letter-spacing:1px}
+.qt-hold-btn{width:100%;border:none;border-radius:12px;font-family:var(--f);font-weight:800;font-size:1rem;padding:14px;cursor:pointer}
+.qt-hold-btn.start{background:var(--a);color:var(--on-a)}
+.qt-hold-btn.stop{background:var(--d);color:#fff}
 /* Sort buttons */
 .qt-sort{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
 .qt-sort button{width:24px;height:24px;border-radius:5px;background:var(--s3);border:none;color:var(--t3);cursor:pointer;font-size:.62rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
@@ -418,7 +430,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
    </div>
   </div>
   <button class="btn-logout" onclick="doLogout()">Logout</button>
-  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.10.2</span> · 22.06.2026</div>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.10.4</span> · 22.06.2026</div>
   <div id="versionMismatch" style="display:none;text-align:center;color:var(--w);font-size:.68rem;margin-top:4px">⚠️ Backend meldet v<span id="beVersion"></span> — Frontend/Backend nicht synchron!</div>
  </div>
 </div>
@@ -443,9 +455,10 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
   <div class="fg"><label>Name</label><input type="text" id="machName" placeholder="Brustpresse"></div>
  </div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-  <div class="fg"><label>Kategorie</label><select id="machCat"><option>Drückübungen</option><option>Zugübungen</option><option>Beine</option><option>Core</option><option>Arme</option><option>Cardio</option><option>Sonstige</option></select></div>
+  <div class="fg"><label>Kategorie</label><select id="machCat"><option>Drückübungen</option><option>Zugübungen</option><option>Beine</option><option>Core</option><option>Arme</option><option>Eigengewicht</option><option>Cardio</option><option>Sonstige</option></select></div>
   <div class="fg"><label>Sitz-Einstellung</label><input type="text" id="machSeat" placeholder="z.B. h7"></div>
  </div>
+ <div class="fg"><label>Tracking-Typ</label><select id="machType"><option value="kraft">Kraft (Gewicht × Wdh)</option><option value="cardio">Cardio (Min / km)</option><option value="halten">Halten (Stoppuhr)</option></select></div>
  <div class="fg"><label>Muskelgruppe</label><input type="text" id="machMG" placeholder="Brust, Trizeps"></div>
  <div class="mo-actions">
   <button id="machDeleteBtn" class="mo-btn" style="background:transparent;border:1px solid var(--d);color:var(--d);display:none;margin-right:auto" onclick="deleteMachine()">🗑 Löschen</button>
@@ -569,11 +582,11 @@ async function loadMachines(){machines=await api('/api/machines');renderMachineL
 function renderMachineList(){document.getElementById('machineList').innerHTML=machines.map(m=>`<div class="ml-item"><span class="ml-nr">${esc(m.machine_number)||'—'}</span><span class="ml-name">${esc(m.name)}</span>${m.seat_settings?`<span class="ml-seat">${esc(m.seat_settings)}</span>`:''}<div class="ml-btns"><button class="ml-btn" onclick="editMachine(${m.id})">✏️</button></div></div>`).join('')}
 function renderAnalysisSelect(){document.getElementById('anaMachine').innerHTML='<option value="">Gerät wählen…</option>'+machines.map(m=>`<option value="${m.id}">${esc(m.machine_number?m.machine_number+' ':'')}${esc(m.name)}</option>`).join('')}
 
-function openMachineModal(m){document.getElementById('machineModalTitle').textContent=m?'Gerät bearbeiten':'Gerät hinzufügen';document.getElementById('editMachId').value=m?m.id:'';document.getElementById('machNr').value=m?m.machine_number||'':'';document.getElementById('machName').value=m?m.name:'';document.getElementById('machCat').value=m?m.category:'Sonstige';document.getElementById('machSeat').value=m?m.seat_settings||'':'';document.getElementById('machMG').value=m?m.muscle_group:'';document.getElementById('machDeleteBtn').style.display=m?'block':'none';document.getElementById('machineModal').classList.add('open')}
+function openMachineModal(m){document.getElementById('machineModalTitle').textContent=m?'Gerät bearbeiten':'Gerät hinzufügen';document.getElementById('editMachId').value=m?m.id:'';document.getElementById('machNr').value=m?m.machine_number||'':'';document.getElementById('machName').value=m?m.name:'';document.getElementById('machCat').value=m?m.category:'Sonstige';document.getElementById('machSeat').value=m?m.seat_settings||'':'';document.getElementById('machMG').value=m?m.muscle_group:'';document.getElementById('machType').value=m?(m.tracking_type||'kraft'):'kraft';document.getElementById('machDeleteBtn').style.display=m?'block':'none';document.getElementById('machineModal').classList.add('open')}
 function closeMachineModal(){document.getElementById('machineModal').classList.remove('open')}
 function editMachine(id){const m=machines.find(x=>x.id===id);if(m)openMachineModal(m)}
 async function deleteMachine(){const id=document.getElementById('editMachId').value;if(!id)return;const name=document.getElementById('machName').value;if(!confirm(`"${name}" wirklich löschen?\n\nDas Gerät wird aus der Liste entfernt.`))return;await api(`/api/machines/${id}`,{method:'DELETE'});closeMachineModal();loadMachines()}
-async function saveMachine(){const id=document.getElementById('editMachId').value;const d={machine_number:document.getElementById('machNr').value.trim(),name:document.getElementById('machName').value.trim(),category:document.getElementById('machCat').value,seat_settings:document.getElementById('machSeat').value.trim(),muscle_group:document.getElementById('machMG').value.trim()};if(!d.name)return alert('Name fehlt');if(id)await api(`/api/machines/${id}`,{method:'PUT',body:d});else await api('/api/machines',{method:'POST',body:d});closeMachineModal();loadMachines()}
+async function saveMachine(){const id=document.getElementById('editMachId').value;const d={machine_number:document.getElementById('machNr').value.trim(),name:document.getElementById('machName').value.trim(),category:document.getElementById('machCat').value,seat_settings:document.getElementById('machSeat').value.trim(),muscle_group:document.getElementById('machMG').value.trim(),tracking_type:document.getElementById('machType').value};if(!d.name)return alert('Name fehlt');if(id)await api(`/api/machines/${id}`,{method:'PUT',body:d});else await api('/api/machines',{method:'POST',body:d});closeMachineModal();loadMachines()}
 
 // ── Add Machine to active session ──
 let addMachSelIds=[];
@@ -606,20 +619,21 @@ async function confirmAddMachine(){
     const skipIdx=skippedMachines.indexOf(selId);
     if(skipIdx>=0){skippedMachines.splice(skipIdx,1)}
     else{
-      const pm={machine_id:m.id,machine_number:m.machine_number,name:m.name,category:m.category,muscle_group:m.muscle_group,seat_settings:m.seat_settings};
+      const pm={machine_id:m.id,machine_number:m.machine_number,name:m.name,category:m.category,muscle_group:m.muscle_group,seat_settings:m.seat_settings,tracking_type:m.tracking_type};
       extraMachines.push(pm);
     }
-    const isCardio=m.category==='Cardio';
+    const tt=trackType(m);const isCardio=tt==='cardio';
     // Letzte Session für vorher-Zeile + Default-Methode laden
     try{const data=await api(`/api/workouts/last-session?machine_ids=${m.id}`);if(data[m.id])lastSession[m.id]=data[m.id]}catch{}
     let meth='d';const last=lastSession[m.id];
-    if(!isCardio&&last?.method){if(last.method==='negativ')meth='n';else if(last.method==='normal')meth='o'}
-    if(isCardio){qtState[m.id]={method:'c',d:[{w:'',r:''}]};}
+    if(!isCardio&&tt!=='halten'&&last?.method){if(last.method==='negativ')meth='n';else if(last.method==='normal')meth='o'}
+    if(tt==='halten'){qtState[m.id]={method:'h',d:[]};}
+    else if(isCardio){qtState[m.id]={method:'c',d:[{w:'',r:''}]};}
     else if(meth==='n'){qtState[m.id]={method:'n',d:[{w:'',r:''},{w:'',r:''},{w:'',r:'',rL:'',rR:''}]};}
     else{qtState[m.id]={method:meth,d:[{w:'',r:''},{w:'',r:''},{w:'',r:''}]};}
     // Find pmData for rendering
     const p=sessionType==='plan'?plans.find(x=>x.id===activePlan):null;
-    const pmData=p?.machines.find(x=>x.machine_id===m.id)||extraMachines.find(x=>x.machine_id===m.id)||{machine_id:m.id,machine_number:m.machine_number,name:m.name,category:m.category,muscle_group:m.muscle_group,seat_settings:m.seat_settings};
+    const pmData=p?.machines.find(x=>x.machine_id===m.id)||extraMachines.find(x=>x.machine_id===m.id)||{machine_id:m.id,machine_number:m.machine_number,name:m.name,category:m.category,muscle_group:m.muscle_group,seat_settings:m.seat_settings,tracking_type:m.tracking_type};
     sessionOrder.push(m.id);
     document.getElementById('qtList').insertAdjacentHTML('beforeend',renderMachineCard(pmData));
   }
@@ -733,15 +747,16 @@ async function startTraining(type){
     const mids=p.machines.map(m=>m.machine_id).join(',');
     try{lastSession=await api(`/api/workouts/last-session?machine_ids=${mids}`)}catch{lastSession={}}
     p.machines.forEach(pm=>{
-      const mid=pm.machine_id;const isCardio=pm.category==='Cardio';
+      const mid=pm.machine_id;const tt=trackType(pm);const isCardio=tt==='cardio';
       const last=lastSession[mid];
       let meth='d';
-      if(!isCardio && last?.method){
+      if(!isCardio && tt!=='halten' && last?.method){
         if(last.method==='negativ')meth='n';
         else if(last.method==='normal')meth='o';
         else meth='d';
       }
-      if(isCardio){qtState[mid]={method:'c',d:[{w:'',r:''}]};}
+      if(tt==='halten'){qtState[mid]={method:'h',d:[]};}
+      else if(isCardio){qtState[mid]={method:'c',d:[{w:'',r:''}]};}
       else if(meth==='n'){qtState[mid]={method:'n',d:[{w:'',r:''},{w:'',r:''},{w:'',r:'',rL:'',rR:''}]};}
       else{qtState[mid]={method:meth,d:[{w:'',r:''},{w:'',r:''},{w:'',r:''}]};}
       sessionOrder.push(mid);
@@ -788,8 +803,14 @@ function cancelTraining(){
   renderQt();
 }
 
+// Tracking-Typ eines Geräts robust ermitteln (Fallback für Alt-Daten ohne Feld)
+function trackType(pm){return (pm&&pm.tracking_type)||((pm&&pm.category==='Cardio')?'cardio':'kraft');}
+function fmtSec(s){s=parseInt(s)||0;const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
+// Laufende Halten-Stoppuhren (nur zur Laufzeit, nicht persistiert)
+let holdTimers={};
+
 function renderMachineCard(pm){
-  const mid=pm.machine_id;const isCardio=pm.category==='Cardio';
+  const mid=pm.machine_id;const tt=trackType(pm);const isCardio=tt==='cardio';
   const last=lastSession[mid];const st=qtState[mid];const m=st.method;
   // Only show max 3 drops in vorher line
   const lastDrops=last?.drops?.slice(0,3)||[];
@@ -799,7 +820,9 @@ function renderMachineCard(pm){
 
   let body=`<div class="qt-body" id="body-${mid}">`;
 
-  if(isCardio){
+  if(tt==='halten'){
+    body+=holdBodyInner(mid);
+  } else if(isCardio){
     body+=`<div class="qt-cardio"><div><div class="qt-cardio-label">Minuten</div><input class="qt-inp" type="number" inputmode="numeric" placeholder="Min" oninput="qtState[${mid}].d[0].w=this.value;persistTraining()"></div><div><div class="qt-cardio-label">km</div><input class="qt-inp" type="number" inputmode="decimal" placeholder="km" oninput="qtState[${mid}].d[0].r=this.value;persistTraining()"></div></div>`;
   } else {
     // D/N/O method buttons
@@ -844,6 +867,47 @@ function renderMachineCard(pm){
 
   body+=`</div>`;
   return header+body+`</div>`;
+}
+
+// ── Halten / Stoppuhr (Plank & Co.) ──
+function holdBodyInner(mid){
+  const st=qtState[mid]||{d:[]};const sets=st.d||[];const running=!!holdTimers[mid];
+  let h='';
+  if(sets.length){
+    h+='<div class="qt-hold-sets">'+sets.map((x,i)=>`<div class="qt-hold-row"><span class="qt-hold-lbl">Satz ${i+1}</span><span class="qt-hold-time">${fmtSec(x.sec)}</span><button class="qt-hold-x" onclick="removeHoldSet(${mid},${i})" title="Satz löschen">✕</button></div>`).join('')+'</div>';
+  }
+  if(running){
+    h+=`<div class="qt-hold-clock-wrap"><span class="qt-hold-dot"></span><span id="hold-clock-${mid}" class="qt-hold-clock">0:00</span></div>`;
+    h+=`<button class="qt-hold-btn stop" onclick="stopHold(${mid})">■ Stop &amp; eintragen</button>`;
+  }else{
+    h+=`<button class="qt-hold-btn start" onclick="startHold(${mid})">${sets.length?'＋ Nächster Satz':'▶ Start'}</button>`;
+  }
+  return h;
+}
+function startHold(mid){
+  if(holdTimers[mid])return;
+  holdTimers[mid]={t0:Date.now()};
+  const b=document.getElementById('body-'+mid);if(b)b.innerHTML=holdBodyInner(mid);
+  holdTimers[mid].iv=setInterval(()=>{
+    const e=Math.floor((Date.now()-holdTimers[mid].t0)/1000);
+    const c=document.getElementById('hold-clock-'+mid);if(c)c.textContent=fmtSec(e);
+  },250);
+}
+function stopHold(mid){
+  const h=holdTimers[mid];if(!h)return;
+  clearInterval(h.iv);
+  let e=Math.floor((Date.now()-h.t0)/1000);if(e<1)e=1;
+  delete holdTimers[mid];
+  if(!qtState[mid])qtState[mid]={method:'h',d:[]};
+  qtState[mid].d.push({sec:e});
+  const b=document.getElementById('body-'+mid);if(b)b.innerHTML=holdBodyInner(mid);
+  persistTraining();
+}
+function removeHoldSet(mid,i){
+  if(!qtState[mid])return;
+  qtState[mid].d.splice(i,1);
+  const b=document.getElementById('body-'+mid);if(b)b.innerHTML=holdBodyInner(mid);
+  persistTraining();
 }
 
 async function setMethod(mid,method){
@@ -953,6 +1017,7 @@ async function saveQt(){
   // ── Prüfung: unvollständige Sätze erkennen ──
   const problems=[];
   for(const pm of allPm){const s=qtState[pm.machine_id];if(!s)continue;
+    if(trackType(pm)==='halten')continue;
     if(pm.category==='Cardio'){
       const w=parseFloat(s.d[0]?.w)||0,r=parseFloat(s.d[0]?.r)||0;
       if((w>0)!==(r>0))problems.push(`${pm.name}: Minuten oder km fehlt`);
@@ -971,6 +1036,11 @@ async function saveQt(){
   }
   if(problems.length&&!confirm(`⚠️ Unvollständige Sätze werden NICHT gespeichert:\n\n${problems.join('\n')}\n\nGraue Werte sind nur Platzhalter — Wdh müssen eingetippt werden!\n\nTrotzdem beenden?`))return;
   for(const pm of allPm){const s=qtState[pm.machine_id];if(!s)continue;
+    if(trackType(pm)==='halten'){
+      const secs=(s.d||[]).map(x=>parseInt(x.sec)||0).filter(v=>v>0);
+      if(secs.length)entries.push({machine_id:pm.machine_id,tracking_type:'halten',drops:secs.map(v=>({duration:v})),training_method:'normal'});
+      continue;
+    }
     const meth=s.method==='d'?'dropsatz':(s.method==='n'?'negativ':'normal');
     if(s.method==='n'&&s.einzeln){
       // Warm 1+2 haben .r, Negativsatz (idx 2) hat .rL und .rR
@@ -1107,14 +1177,18 @@ async function loadHistory(){
 }
 function toggleDay(idx){document.getElementById('hd-'+idx).classList.toggle('open')}
 function renderHistMachine(m){
-  const isCardio=m.category==='Cardio';
+  const tt=(m.tracking_type)||(m.category==='Cardio'?'cardio':'kraft');
+  const isCardio=tt==='cardio';
   let badge,bs;
-  if(isCardio){badge='Cardio';bs='background:rgba(0,196,255,.12);color:var(--a2)'}
+  if(tt==='halten'){badge='Halten';bs='background:var(--ad);color:var(--a)'}
+  else if(isCardio){badge='Cardio';bs='background:rgba(0,196,255,.12);color:var(--a2)'}
   else if(m.method==='dropsatz'){badge='D · Drop';bs='background:var(--ad);color:var(--a)'}
   else if(m.method==='negativ'){badge='N · Negativ'+(m.notes==='Links'?' · L':(m.notes==='Rechts'?' · R':''));bs='background:rgba(0,196,255,.12);color:var(--a2)'}
   else{badge='O · Normal';bs='background:var(--s3);color:var(--t2)'}
   const ids=m.sets.map(s=>s.id).join(',');
-  const sets=isCardio
+  const sets=tt==='halten'
+    ?m.sets.map(s=>`<span><b class="hw">${fmtSec(s.duration_seconds)}</b> Min:Sek</span>`).join('')
+    :isCardio
     ?m.sets.map(s=>`<span><b class="hw">${s.weight}</b> Min · <b>${s.reps}</b> km</span>`).join('')
     :m.sets.map(s=>`<span><b class="hw">${s.weight}</b> kg × <b>${s.reps}</b></span>`).join('');
   return`<div class="hm"><div class="hm-top">${m.machine_number?`<span class="qt-nr" style="font-size:.85rem">${esc(m.machine_number)}</span>`:''}<span style="font-weight:700;font-size:.9rem">${esc(m.name)}</span><span class="hm-badge" style="${bs}">${badge}</span><button class="wi-del" style="margin-left:auto" onclick="delHistGroup('${ids}')" title="Eintrag löschen">✕</button></div><div class="hm-sets">${sets}</div></div>`;
