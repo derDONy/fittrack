@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.10.2"
+APP_VERSION = "0.10.4"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -118,6 +118,7 @@ def init_db():
             muscle_group TEXT NOT NULL DEFAULT '',
             seat_settings TEXT DEFAULT '',
             notes TEXT DEFAULT '',
+            tracking_type TEXT NOT NULL DEFAULT 'kraft',
             created_at TEXT DEFAULT (datetime('now')),
             archived INTEGER DEFAULT 0
         );
@@ -195,6 +196,10 @@ def init_db():
         conn.execute("ALTER TABLE workouts ADD COLUMN training_method TEXT DEFAULT 'normal'")
     if not col_exists('workouts', 'drop_set_num'):
         conn.execute("ALTER TABLE workouts ADD COLUMN drop_set_num INTEGER DEFAULT 0")
+    if not col_exists('machines', 'tracking_type'):
+        conn.execute("ALTER TABLE machines ADD COLUMN tracking_type TEXT NOT NULL DEFAULT 'kraft'")
+        # Bestehende Cardio-Geräte (z.B. Laufband) auf den Cardio-Tracking-Typ setzen
+        conn.execute("UPDATE machines SET tracking_type = 'cardio' WHERE category = 'Cardio'")
     conn.commit()
 
     # Create default user if no users exist
@@ -241,6 +246,12 @@ def init_db():
         conn.executemany(
             "INSERT INTO machines (machine_number, name, category, muscle_group, seat_settings) VALUES (?, ?, ?, ?, ?)",
             defaults
+        )
+        # Tracking-Typen für die Default-Geräte setzen (executemany oben nutzt den 'kraft'-Default)
+        conn.execute("UPDATE machines SET tracking_type = 'cardio' WHERE name = 'Laufband'")
+        conn.execute(
+            "INSERT INTO machines (machine_number, name, category, muscle_group, seat_settings, tracking_type) "
+            "VALUES ('', 'Planking', 'Eigengewicht', 'Core/Rumpf', '', 'halten')"
         )
 
     conn.commit()
@@ -399,9 +410,10 @@ def add_machine():
         return jsonify({"error": "Name ist erforderlich"}), 400
     conn = get_db()
     cur = conn.execute(
-        "INSERT INTO machines (machine_number, name, category, muscle_group, seat_settings, notes) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO machines (machine_number, name, category, muscle_group, seat_settings, notes, tracking_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
         (data.get('machine_number', ''), data['name'], data.get('category', 'Sonstige'),
-         data.get('muscle_group', ''), data.get('seat_settings', ''), data.get('notes', ''))
+         data.get('muscle_group', ''), data.get('seat_settings', ''), data.get('notes', ''),
+         data.get('tracking_type', 'kraft'))
     )
     conn.commit()
     machine = conn.execute("SELECT * FROM machines WHERE id = ?", (cur.lastrowid,)).fetchone()
@@ -415,9 +427,10 @@ def update_machine(machine_id):
     data = request.json
     conn = get_db()
     conn.execute(
-        "UPDATE machines SET machine_number=?, name=?, category=?, muscle_group=?, seat_settings=?, notes=? WHERE id=?",
+        "UPDATE machines SET machine_number=?, name=?, category=?, muscle_group=?, seat_settings=?, notes=?, tracking_type=? WHERE id=?",
         (data.get('machine_number', ''), data.get('name', ''), data.get('category', 'Sonstige'),
-         data.get('muscle_group', ''), data.get('seat_settings', ''), data.get('notes', ''), machine_id)
+         data.get('muscle_group', ''), data.get('seat_settings', ''), data.get('notes', ''),
+         data.get('tracking_type', 'kraft'), machine_id)
     )
     conn.commit()
     machine = conn.execute("SELECT * FROM machines WHERE id = ?", (machine_id,)).fetchone()
@@ -445,7 +458,7 @@ def get_plans():
     result = []
     for p in plans:
         machines = conn.execute("""
-            SELECT pm.*, m.machine_number, m.name, m.category, m.muscle_group, m.seat_settings
+            SELECT pm.*, m.machine_number, m.name, m.category, m.muscle_group, m.seat_settings, m.tracking_type
             FROM plan_machines pm JOIN machines m ON pm.machine_id = m.id
             WHERE pm.plan_id = ?
             ORDER BY pm.sort_order
@@ -591,6 +604,22 @@ def batch_save_workouts():
         notes = entry.get('notes', '')
         entry_method = entry.get('training_method', training_method)
 
+        # Halten (z.B. Plank): jeder Satz ist eine gehaltene Dauer, kein Gewicht/Wdh.
+        # Muss VOR der weight>0/reps>0-Prüfung behandelt werden, sonst würde er verworfen.
+        if entry.get('tracking_type') == 'halten':
+            for i, drop in enumerate(drops):
+                dur = drop.get('duration') or 0
+                if dur and dur > 0:
+                    conn.execute(
+                        """INSERT INTO workouts
+                           (machine_id, workout_date, sets, reps, weight,
+                            duration_seconds, training_method, drop_set_num, notes)
+                           VALUES (?, ?, 1, 1, 0, ?, ?, ?, ?)""",
+                        (machine_id, workout_date, dur, entry_method, i, notes)
+                    )
+                    saved += 1
+            continue
+
         for i, drop in enumerate(drops):
             weight = drop.get('weight', 0)
             reps = drop.get('reps', 0)
@@ -684,7 +713,7 @@ def workout_sessions():
     for d in dates:
         date = d['workout_date']
         rows = conn.execute("""
-            SELECT w.*, m.name as machine_name, m.machine_number, m.category, m.seat_settings
+            SELECT w.*, m.name as machine_name, m.machine_number, m.category, m.seat_settings, m.tracking_type
             FROM workouts w JOIN machines m ON w.machine_id = m.id
             WHERE w.workout_date = ?
             ORDER BY w.created_at ASC, w.id ASC
@@ -698,7 +727,7 @@ def workout_sessions():
                 groups[key] = {
                     'machine_id': r['machine_id'], 'name': r['machine_name'],
                     'machine_number': r['machine_number'], 'category': r['category'],
-                    'seat_settings': r['seat_settings'],
+                    'seat_settings': r['seat_settings'], 'tracking_type': r['tracking_type'],
                     'method': r['training_method'] or 'normal', 'notes': r['notes'] or '',
                     'sets': []
                 }
