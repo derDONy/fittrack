@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.12.1"
+APP_VERSION = "0.12.2"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))

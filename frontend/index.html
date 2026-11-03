@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FitTrack v0.12.1 — 2026-11-03 -->
+<!-- FitTrack v0.12.2 — 2026-11-03 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0f">
-<script>(function(){try{var m=localStorage.getItem('ft_theme')||'system';var r=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;document.documentElement.setAttribute('data-theme',r);}catch(e){}})();</script>
+<script>(function(){try{var m=localStorage.getItem('ft_theme')||'system';var r=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;document.documentElement.setAttribute('data-theme',r);var a=localStorage.getItem('ft_accent');if(a&&a!=='green')document.documentElement.setAttribute('data-accent',a);}catch(e){}})();</script>
 <title>FitTrack</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icons/favicon.png">
@@ -17,6 +17,18 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0a0a0f;--s:#12121a;--s2:#1a1a26;--s3:#222233;--a:#00e5a0;--a2:#00c4ff;--ad:rgba(0,229,160,0.12);--d:#ff4466;--w:#ffaa00;--t:#e8e8f0;--t2:#8888a0;--t3:#555566;--r:14px;--f:'Space Grotesk',sans-serif;--m:'JetBrains Mono',monospace;--on-a:#0a0a0f;--a-dim:rgba(0,229,160,0.32);--a2-dim:rgba(0,196,255,0.32);--a2-tint:rgba(0,196,255,0.12);--w-dim:rgba(255,170,0,0.32);--w-tint:rgba(255,170,0,0.12)}
 :root[data-theme="light"]{--bg:#f5f6f8;--s:#ffffff;--s2:#eef0f4;--s3:#dde1e8;--a:#0a9d6e;--a2:#0a82b0;--ad:rgba(10,157,110,0.13);--d:#e11d48;--w:#b9760a;--t:#1a1c25;--t2:#5b5f6e;--t3:#9aa0ad;--on-a:#ffffff;--a-dim:rgba(10,157,110,0.30);--a2-dim:rgba(10,130,176,0.30);--a2-tint:rgba(10,130,176,0.13);--w-dim:rgba(185,118,10,0.32);--w-tint:rgba(185,118,10,0.14)}
+/* Akzentfarben (Mehr → Darstellung); Grün = Standard aus :root */
+:root[data-accent="blue"]{--a:#5b7cff;--ad:rgba(91,124,255,0.12);--a-dim:rgba(91,124,255,0.32)}
+:root[data-accent="violet"]{--a:#a78bfa;--ad:rgba(167,139,250,0.12);--a-dim:rgba(167,139,250,0.32)}
+:root[data-accent="magenta"]{--a:#ff6ad5;--ad:rgba(255,106,213,0.12);--a-dim:rgba(255,106,213,0.32)}
+:root[data-accent="orange"]{--a:#ff8a3d;--ad:rgba(255,138,61,0.12);--a-dim:rgba(255,138,61,0.32)}
+:root[data-theme="light"][data-accent="blue"]{--a:#3a55d9;--ad:rgba(58,85,217,0.13);--a-dim:rgba(58,85,217,0.30)}
+:root[data-theme="light"][data-accent="violet"]{--a:#6d4ad6;--ad:rgba(109,74,214,0.13);--a-dim:rgba(109,74,214,0.30)}
+:root[data-theme="light"][data-accent="magenta"]{--a:#c0268f;--ad:rgba(192,38,143,0.13);--a-dim:rgba(192,38,143,0.30)}
+:root[data-theme="light"][data-accent="orange"]{--a:#c2540a;--ad:rgba(194,84,10,0.13);--a-dim:rgba(194,84,10,0.30)}
+.acc-row{display:flex;gap:10px;margin-top:12px}
+.acc-sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--s3);cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.acc-sw.sel{border-color:var(--t);transform:scale(1.1)}
 :root[data-theme="light"] .card,:root[data-theme="light"] .qt,:root[data-theme="light"] .stat,:root[data-theme="light"] .hd,:root[data-theme="light"] .ml-modal,:root[data-theme="light"] .login-b,:root[data-theme="light"] .neg{box-shadow:0 1px 2px rgba(20,22,40,0.05),0 1px 3px rgba(20,22,40,0.05)}
 :root[data-theme="light"] .bnav{box-shadow:0 -1px 3px rgba(20,22,40,0.04)}
 html{font-size:16px;background:var(--bg)}body{font-family:var(--f);background:var(--bg);color:var(--t);min-height:100vh;-webkit-tap-highlight-color:transparent}
@@ -68,7 +80,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 
 /* Quick Training machine card */
 .qt{background:var(--s);border:1px solid var(--s3);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:all .2s}
-.qt.done{opacity:.45;border-color:rgba(0,229,160,.35)}
+.qt.done{opacity:.45;border-color:var(--a-dim)}
 .qt-top{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}
 .qt-del{width:26px;height:26px;border-radius:50%;background:var(--s3);border:none;color:var(--t3);cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .qt-del:active{background:var(--d);color:var(--on-a)}
@@ -92,7 +104,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .qt-drop-label{font-size:.72rem;color:var(--t3);font-weight:700;text-align:center;margin-bottom:6px}
 .qt-inp{width:100%;padding:10px 4px;background:var(--bg);border:1.5px solid var(--s3);border-radius:8px;color:var(--t);font-family:var(--m);font-size:1rem;text-align:center;outline:none;transition:border-color .15s}
 .qt-inp:focus{border-color:var(--a)}
-.qt-inp.has{border-color:rgba(0,229,160,.35)}
+.qt-inp.has{border-color:var(--a-dim)}
 .qt-cardio{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .qt-cardio-label{font-size:.72rem;color:var(--t3);font-weight:600;text-transform:uppercase;margin-bottom:3px;text-align:center}
 
@@ -205,7 +217,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .wb-period button{flex:1;padding:6px;border:1.5px solid var(--s3);border-radius:8px;background:var(--bg);color:var(--t2);font-family:var(--f);font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s}
 .wb-period button.sel{border-color:var(--a);background:var(--ad);color:var(--a)}
 /* Pause Toast */
-.pause-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);background:var(--s2);border:1.5px solid var(--a);border-radius:14px;padding:10px 18px;display:flex;align-items:center;gap:14px;z-index:60;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,229,160,.25)}
+.pause-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);background:var(--s2);border:1.5px solid var(--a);border-radius:14px;padding:10px 18px;display:flex;align-items:center;gap:14px;z-index:60;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px var(--a-dim)}
 .pause-toast.show{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
 .pause-toast-time{font-family:var(--m);font-size:1.3rem;font-weight:700;color:var(--a)}
 .pause-toast-btn{background:var(--s3);border:none;color:var(--t);padding:6px 14px;border-radius:8px;font-family:var(--f);font-size:.8rem;font-weight:700;cursor:pointer}
@@ -374,9 +386,16 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
     <button data-theme-mode="dark">🌙 Dunkel</button>
     <button data-theme-mode="system">🖥️ System</button>
    </div>
+   <div class="acc-row" id="accentRow">
+    <button class="acc-sw" data-accent="green" style="background:#00e5a0" title="Grün" aria-label="Grün"></button>
+    <button class="acc-sw" data-accent="blue" style="background:#5b7cff" title="Blau" aria-label="Blau"></button>
+    <button class="acc-sw" data-accent="violet" style="background:#a78bfa" title="Violett" aria-label="Violett"></button>
+    <button class="acc-sw" data-accent="magenta" style="background:#ff6ad5" title="Magenta" aria-label="Magenta"></button>
+    <button class="acc-sw" data-accent="orange" style="background:#ff8a3d" title="Orange" aria-label="Orange"></button>
+   </div>
   </div>
   <button class="btn-logout" onclick="doLogout()">Logout</button>
-  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.1</span> · 03.11.2026</div>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.2</span> · 03.11.2026</div>
   <div id="versionMismatch" style="display:none;text-align:center;color:var(--w);font-size:.68rem;margin-top:4px">⚠️ Backend meldet v<span id="beVersion"></span> — Frontend/Backend nicht synchron!</div>
  </div>
 </div>
@@ -1169,6 +1188,16 @@ function toggleThemeQuick(){const cur=document.documentElement.getAttribute('dat
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.themeMode)));
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if((localStorage.getItem('ft_theme')||'system')==='system')applyTheme()})}catch{}
 applyTheme();
+
+// ── Akzentfarbe ──
+function applyAccent(){
+  let acc='green';try{acc=localStorage.getItem('ft_accent')||'green'}catch{}
+  if(acc==='green')document.documentElement.removeAttribute('data-accent');else document.documentElement.setAttribute('data-accent',acc);
+  document.querySelectorAll('#accentRow .acc-sw').forEach(b=>b.classList.toggle('sel',b.dataset.accent===acc));
+}
+function setAccent(acc){try{localStorage.setItem('ft_accent',acc)}catch{}applyAccent()}
+document.querySelectorAll('#accentRow .acc-sw').forEach(b=>b.addEventListener('click',()=>setAccent(b.dataset.accent)));
+applyAccent();
 
 // Init
 async function initApp(){
