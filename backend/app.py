@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.12.0"
+APP_VERSION = "0.12.1"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -69,13 +69,12 @@ def add_security_headers(response):
         "script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' https://api.anthropic.com; "
+        "connect-src 'self'; "
         "img-src 'self' data: blob:;"
     )
     return response
 
 DB_PATH = os.environ.get('DB_PATH', '/app/data/fittrack.db')
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 
 
 # ── Database Setup ──────────────────────────────────────────────────────────
@@ -831,99 +830,6 @@ def get_wellbeing_today():
     row = conn.execute("SELECT * FROM wellbeing_logs WHERE log_date = ?", (today,)).fetchone()
     conn.close()
     return jsonify(dict(row) if row else {})
-
-
-# ── AI Coach API ────────────────────────────────────────────────────────────
-
-@app.route('/api/ai/tips', methods=['POST'])
-@login_required
-def ai_tips():
-    if not ANTHROPIC_API_KEY:
-        return jsonify({"tip": "⚠️ Kein Anthropic API Key konfiguriert. Setze ANTHROPIC_API_KEY in deiner .env Datei."})
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-        conn = get_db()
-        overview = {}
-        overview['total'] = conn.execute("SELECT COUNT(*) FROM workouts").fetchone()[0]
-        week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-        overview['this_week'] = conn.execute("SELECT COUNT(*) FROM workouts WHERE workout_date >= ?", (week_ago,)).fetchone()[0]
-        recent = conn.execute("""
-            SELECT w.workout_date, m.name, m.muscle_group, w.sets, w.reps, w.weight,
-                   w.training_method, w.drop_set_num
-            FROM workouts w JOIN machines m ON w.machine_id = m.id
-            ORDER BY w.workout_date DESC LIMIT 30
-        """).fetchall()
-        recent_list = [dict(r) for r in recent]
-        neglected = conn.execute("""
-            SELECT m.name, m.muscle_group, MAX(w.workout_date) as last_used
-            FROM machines m LEFT JOIN workouts w ON m.id = w.machine_id
-            WHERE m.archived = 0 GROUP BY m.id
-            HAVING last_used IS NULL OR last_used < ?
-        """, ((datetime.now() - timedelta(days=14)).strftime('%Y-%m-%d'),)).fetchall()
-        neglected_list = [dict(r) for r in neglected]
-        progress = conn.execute("""
-            SELECT m.name, COUNT(w.id) as total_workouts, MIN(w.weight) as min_weight,
-                   MAX(w.weight) as max_weight, AVG(w.weight) as avg_weight
-            FROM machines m JOIN workouts w ON m.id = w.machine_id
-            WHERE m.archived = 0 GROUP BY m.id
-        """).fetchall()
-        progress_list = [dict(r) for r in progress]
-        wellbeing = conn.execute("""
-            SELECT log_date, mood, sleep, hydration, joints, is_training_day
-            FROM wellbeing_logs ORDER BY log_date DESC LIMIT 14
-        """).fetchall()
-        wellbeing_list = [dict(r) for r in wellbeing]
-        conn.close()
-        user_query = request.json.get('query', '') if request.json else ''
-        context = f"""Du bist ein erfahrener Fitness-Coach. Duze den Nutzer immer.
-
-ÜBER DEN NUTZER:
-- Trainiert bei FitX an Technogym Selection Geräten (wenn du Tipps zu Einstellungen oder Ausführung hast, nutze dein Wissen über diese Geräte)
-- Fokus liegt auf OBERKÖRPER — Beine werden bewusst nicht an Maschinen trainiert, da das Laufband-Programm die Beinmuskulatur bereits ausreichend beansprucht
-- Hat rheumatoide Arthritis — an manchen Tagen sind die Gelenke steif oder schmerzhaft, dann schafft er weniger als geplant. Das ist kein Motivationsproblem, sondern die Erkrankung. Sei verständnisvoll, aber nicht bemitleidend.
-- Trainiert aktuell Dropsätze (hohes Gewicht bis Muskelversagen → -10kg → Versagen → -10kg). Wechselt bald zu Negativtraining.
-
-LAUFBAND-ROUTINE (Technogym Laufband):
-- 5 km pro Session, kein Spaziergang
-- Erste 4 km: Steigung 1-2, Geschwindigkeit 10,4
-- Letzter Kilometer variiert: meist 2-3 Intervalle à 1 Min bei Geschwindigkeit 9 / Steigung 15 (Maximum)
-- Letzte 100-300m: Steigung 2, Geschwindigkeit 15 (Sprint-Finish)
-- Das ist ein ernsthaftes Cardio- und Beintraining — berücksichtige das bei Empfehlungen
-
-TRAININGSDATEN:
-Gesamt: {overview['total']} Einträge, {overview['this_week']} diese Woche
-
-Letzte Trainings:
-{json.dumps(recent_list, ensure_ascii=False, indent=2)}
-
-Vernachlässigt (>14 Tage):
-{json.dumps(neglected_list, ensure_ascii=False, indent=2)}
-
-Fortschritt:
-{json.dumps(progress_list, ensure_ascii=False, indent=2)}
-
-BEFINDEN (letzte 14 Einträge, mood/sleep/joints: 1=super 2=gut 3=mäßig 4=schlecht, hydration in Liter):
-{json.dumps(wellbeing_list, ensure_ascii=False, indent=2)}
-
-ANTWORT-REGELN:
-- Kurz und knackig, max 200 Wörter
-- Deutsch, motivierend aber ehrlich
-- Duzen!
-- Keine Bein-Maschinen empfehlen (Laufband reicht)
-- Bei schwachen Tagen: könnte die Arthritis sein, nicht gleich Übertraining vermuten
-- Beziehe die Befinden-Daten ein: Schlaf, Gelenke, Stimmung korrelieren mit Trainingsleistung
-- Emojis sparsam (max 2-3)"""
-        if user_query:
-            context += f"\n\nSpezifische Frage: {user_query}"
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001", max_tokens=512,
-            messages=[{"role": "user", "content": context}]
-        )
-        return jsonify({"tip": response.content[0].text})
-    except Exception as e:
-        app.logger.error(f"[FitTrack] AI-Fehler: {e}")
-        return jsonify({"tip": "Fehler bei der AI-Analyse. Bitte später erneut versuchen."}), 500
 
 
 # init_db() hier aufrufen, damit es sowohl unter Gunicorn als auch direkt funktioniert

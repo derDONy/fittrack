@@ -10,7 +10,6 @@ services:
     volumes:
       - fittrack_data:/app/data
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - FITTRACK_USER=${FITTRACK_USER:-admin}
       - FITTRACK_PASS=${FITTRACK_PASS:-changeme}

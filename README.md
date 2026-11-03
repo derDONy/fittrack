@@ -1,6 +1,6 @@
 # FitTrack — Dein persönlicher Fitness Tracker 💪
 
-Ein Self-Hosted Fitness Tracker mit AI-Coach, optimiert für Synology NAS.
+Ein Self-Hosted Fitness Tracker, optimiert für Synology NAS.
 
 ## Features
 
@@ -8,7 +8,6 @@ Ein Self-Hosted Fitness Tracker mit AI-Coach, optimiert für Synology NAS.
 - **Training loggen** — Gewicht, Sätze, Wiederholungen, Notizen eintragen
 - **Fortschrittsanalyse** — Trends, Volumenverlauf und persönliche Rekorde
 - **Vernachlässigung erkennen** — Hinweis wenn Geräte >14 Tage nicht genutzt
-- **AI Fitness Coach** — Trainingstipps via Anthropic Claude API
 - **Docker-ready** — Ein Befehl, läuft auf deiner Synology NAS
 
 ## Schnellstart auf Synology NAS
@@ -17,7 +16,6 @@ Ein Self-Hosted Fitness Tracker mit AI-Coach, optimiert für Synology NAS.
 
 - Synology NAS mit **Container Manager** (ehemals Docker)
 - SSH-Zugang zur NAS (aktivierbar unter: Systemsteuerung → Terminal & SNMP)
-- Optional: Anthropic API Key für AI-Coach (https://console.anthropic.com/)
 
 ### Schritt 1: Dateien auf die NAS kopieren
 
@@ -33,7 +31,7 @@ scp -r fittrack/ dein-user@NAS-IP:/volume1/docker/fittrack/
 ```bash
 cd /volume1/docker/fittrack
 cp .env.example .env
-nano .env  # API Key eintragen
+nano .env  # SECRET_KEY und Login-Daten eintragen
 ```
 
 ### Schritt 3: Container starten
@@ -117,7 +115,6 @@ Nutze eine `.htpasswd` Datei und konfiguriere den Nginx im Reverse Proxy.
 | Backend | Python 3.11, Flask |
 | Datenbank | SQLite (persistent via Docker Volume) |
 | Frontend | Vanilla HTML/CSS/JS |
-| AI | Anthropic Claude API |
 | Container | Docker + docker-compose |
 
 ### API Endpunkte
@@ -134,7 +131,6 @@ Nutze eine `.htpasswd` Datei und konfiguriere den Nginx im Reverse Proxy.
 | GET | `/api/analytics/overview` | Dashboard-Statistiken |
 | GET | `/api/analytics/machine/:id` | Geräte-Analyse |
 | GET | `/api/analytics/history` | Volumen-Verlauf |
-| POST | `/api/ai/tips` | AI Coach Tipps |
 
 ### Daten-Backup
 
@@ -160,9 +156,6 @@ docker-compose logs fittrack
 
 **Port belegt:**
 Ändere in `docker-compose.yml` den Port z.B. auf `"9090:8484"`.
-
-**AI Coach funktioniert nicht:**
-Prüfe ob `ANTHROPIC_API_KEY` in der `.env` korrekt gesetzt ist.
 
 **Datenbank zurücksetzen:**
 ```bash
