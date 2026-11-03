@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.12.3"
+APP_VERSION = "0.12.4"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -101,6 +101,10 @@ def verify_password(password, stored):
 
 def init_db():
     conn = get_db()
+    # Merken, ob body_weights neu angelegt wird -> einmalige Dip-Umstellung (s.u.)
+    first_bw_start = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='body_weights'"
+    ).fetchone() is None
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,6 +166,15 @@ def init_db():
             joints INTEGER DEFAULT NULL,
             notes TEXT DEFAULT '',
             is_training_day INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Körpergewicht pro Tag (vor dem Training gewogen). Wird für Geräte mit
+        -- tracking_type 'assist' gebraucht: echte Last = Körpergewicht - Unterstützung.
+        CREATE TABLE IF NOT EXISTS body_weights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            log_date TEXT NOT NULL UNIQUE,
+            weight REAL NOT NULL,
             created_at TEXT DEFAULT (datetime('now'))
         );
 
@@ -241,6 +254,12 @@ def init_db():
             "INSERT INTO machines (machine_number, name, category, muscle_group, seat_settings, tracking_type) "
             "VALUES ('', 'Planking', 'Eigengewicht', 'Core/Rumpf', '', 'halten')"
         )
+
+    # Einmalig (beim ersten Start mit body_weights): Dip-Geräte auf 'assist' setzen —
+    # dort ist das Gewicht die Unterstützung, weniger kg = besser. Spätere manuelle
+    # Änderungen am Tracking-Typ werden dadurch nicht mehr überschrieben.
+    if first_bw_start:
+        conn.execute("UPDATE machines SET tracking_type = 'assist' WHERE tracking_type = 'kraft' AND name LIKE '%dip%'")
 
     conn.commit()
     conn.close()
@@ -636,10 +655,12 @@ def last_session():
                     HAVING created_at = MAX(created_at)
                     ORDER BY drop_set_num ASC
                 """, (mid, last_date)).fetchall()
+            bw = conn.execute("SELECT weight FROM body_weights WHERE log_date = ?", (last_date,)).fetchone()
             result[str(mid)] = {
                 "date": last_date,
                 "drops": [{"weight": d['weight'], "reps": d['reps'], "duration": d['duration_seconds']} for d in drops],
-                "method": drops[0]['training_method'] if drops else 'dropsatz'
+                "method": drops[0]['training_method'] if drops else 'dropsatz',
+                "body_weight": bw['weight'] if bw else None
             }
 
     conn.close()
@@ -828,6 +849,38 @@ def get_wellbeing_today():
     conn = get_db()
     today = datetime.now().strftime('%Y-%m-%d')
     row = conn.execute("SELECT * FROM wellbeing_logs WHERE log_date = ?", (today,)).fetchone()
+    conn.close()
+    return jsonify(dict(row) if row else {})
+
+
+# ── Körpergewicht API ───────────────────────────────────────────────────────
+
+@app.route('/api/bodyweight', methods=['POST'])
+@login_required
+def save_bodyweight():
+    data = request.json or {}
+    try:
+        weight = float(data.get('weight') or 0)
+    except (TypeError, ValueError):
+        weight = 0
+    if not 20 <= weight <= 400:
+        return jsonify({"error": "Ungültiges Körpergewicht"}), 400
+    log_date = data.get('log_date', datetime.now().strftime('%Y-%m-%d'))
+    conn = get_db()
+    conn.execute("""
+        INSERT INTO body_weights (log_date, weight) VALUES (?, ?)
+        ON CONFLICT(log_date) DO UPDATE SET weight = excluded.weight
+    """, (log_date, weight))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route('/api/bodyweight/latest', methods=['GET'])
+@login_required
+def get_latest_bodyweight():
+    conn = get_db()
+    row = conn.execute("SELECT log_date, weight FROM body_weights ORDER BY log_date DESC LIMIT 1").fetchone()
     conn.close()
     return jsonify(dict(row) if row else {})
 

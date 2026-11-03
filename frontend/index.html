@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FitTrack v0.12.3 — 2026-11-03 -->
+<!-- FitTrack v0.12.4 — 2026-11-03 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -197,6 +197,9 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .mp-item.sel .mp-cb{background:var(--a);border-color:var(--a);color:var(--on-a)}
 
 .save-msg{text-align:center;margin-top:8px;color:var(--a);font-weight:700;min-height:1.4rem}
+.bw-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--s);border:1px solid var(--s3);border-radius:10px;font-size:.8rem;color:var(--t2)}
+.bw-row label{flex:1;font-weight:600}
+.bw-row .qt-inp{width:80px;flex:none;padding:6px 8px;text-align:center}
 .legend{display:flex;gap:12px;justify-content:center;margin-top:10px;font-size:.65rem;color:var(--t3)}
 .btn-logout{width:100%;margin-top:16px;padding:12px;background:transparent;border:1px solid var(--d);border-radius:10px;color:var(--d);font-family:var(--f);font-size:.88rem;font-weight:600;cursor:pointer}
 
@@ -298,6 +301,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
     <span id="sessionTitle" style="font-size:1rem;font-weight:800"></span>
     <span style="font-size:.72rem;color:var(--t3);font-family:var(--m);flex-shrink:0" id="sessionDate"></span>
    </div>
+   <div class="bw-row"><label for="bwInput">⚖️ Körpergewicht heute</label><input class="qt-inp" id="bwInput" type="number" inputmode="decimal" placeholder="kg" oninput="onBodyWeightInput(this.value)"><span>kg</span></div>
    <div id="qtList"></div>
    <button class="mo-btn mo-btn-s" style="width:100%;margin-top:4px;padding:10px;font-size:.85rem" onclick="openAddMachineModal()">+ Gerät hinzufügen</button>
    <button class="btn-p" style="margin-top:8px;font-size:1.1rem;font-weight:800" onclick="saveQt()">🏁 Training beenden</button>
@@ -398,7 +402,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
    </div>
   </div>
   <button class="btn-logout" onclick="doLogout()">Logout</button>
-  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.3</span> · 03.11.2026</div>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.4</span> · 03.11.2026</div>
   <div id="versionMismatch" style="display:none;text-align:center;color:var(--w);font-size:.68rem;margin-top:4px">⚠️ Backend meldet v<span id="beVersion"></span> — Frontend/Backend nicht synchron!</div>
  </div>
 </div>
@@ -426,7 +430,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
   <div class="fg"><label>Kategorie</label><select id="machCat"><option>Drückübungen</option><option>Zugübungen</option><option>Beine</option><option>Core</option><option>Arme</option><option>Eigengewicht</option><option>Cardio</option><option>Sonstige</option></select></div>
   <div class="fg"><label>Sitz-Einstellung</label><input type="text" id="machSeat" placeholder="z.B. h7"></div>
  </div>
- <div class="fg"><label>Tracking-Typ</label><select id="machType"><option value="kraft">Kraft (Gewicht × Wdh)</option><option value="cardio">Cardio (Min / km)</option><option value="halten">Halten (Stoppuhr)</option></select></div>
+ <div class="fg"><label>Tracking-Typ</label><select id="machType"><option value="kraft">Kraft (Gewicht × Wdh)</option><option value="cardio">Cardio (Min / km)</option><option value="halten">Halten (Stoppuhr)</option><option value="assist">Unterstützt (weniger kg = besser, z.B. Dips)</option></select></div>
  <div class="fg"><label>Muskelgruppe</label><input type="text" id="machMG" placeholder="Brust, Trizeps"></div>
  <div class="mo-actions">
   <button id="machDeleteBtn" class="mo-btn" style="background:transparent;border:1px solid var(--d);color:var(--d);display:none;margin-right:auto" onclick="deleteMachine()">🗑 Löschen</button>
@@ -491,6 +495,8 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 
 <script>
 let machines=[],plans=[],activePlan=null,qtState={},qtDone={},lastSession={},extraMachines=[],skippedMachines=[],trainingActive=false,sessionType=null,sessionOrder=[];
+// Körpergewicht: bodyWeight = heute eingetippt (wird gespeichert), bodyWeightLast = letzter bekannter Wert (nur Platzhalter)
+let bodyWeight='',bodyWeightLast=null;
 let pauseTimerSecs=90,pauseTimerInterval=null,pauseTimerRemaining=0;
 
 function showPw(id){const el=document.getElementById(id);if(el)el.type='text'}
@@ -502,7 +508,7 @@ function showApp(u){document.getElementById('loginScreen').style.display='none';
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
 // ── localStorage persistence (nur für AKTIVE Trainings) ──
-function persistTraining(){if(!trainingActive)return;try{localStorage.setItem('ft_active',JSON.stringify({active:true,type:sessionType,planId:activePlan,state:qtState,done:qtDone,extra:extraMachines,skipped:skippedMachines,order:sessionOrder,ts:Date.now()}))}catch{}}
+function persistTraining(){if(!trainingActive)return;try{localStorage.setItem('ft_active',JSON.stringify({active:true,type:sessionType,planId:activePlan,state:qtState,done:qtDone,extra:extraMachines,skipped:skippedMachines,order:sessionOrder,bw:bodyWeight,bwLast:bodyWeightLast,ts:Date.now()}))}catch{}}
 function loadPersistedTraining(){try{const d=JSON.parse(localStorage.getItem('ft_active'));if(d&&d.active===true&&(Date.now()-d.ts)<86400000)return d}catch{}return null}
 function clearPersistedTraining(){try{localStorage.removeItem('ft_active')}catch{}}
 
@@ -694,6 +700,7 @@ async function renderQt(){
     // Laufendes Training wiederherstellen (z.B. nach Seiten-Reload)
     trainingActive=true;sessionType=persisted.type||'plan';activePlan=persisted.planId;
     qtState=persisted.state||{};qtDone=persisted.done||{};extraMachines=persisted.extra||[];skippedMachines=persisted.skipped||[];sessionOrder=persisted.order||[];
+    bodyWeight=persisted.bw||'';bodyWeightLast=persisted.bwLast||null;
     await showActiveScreen(true);
     return;
   }
@@ -708,6 +715,8 @@ async function startTraining(type){
   if(trainingActive)return;
   sessionType=type;
   qtState={};qtDone={};extraMachines=[];skippedMachines=[];lastSession={};sessionOrder=[];
+  bodyWeight='';bodyWeightLast=null;
+  try{const bw=await api('/api/bodyweight/latest');if(bw&&bw.weight)bodyWeightLast=bw.weight}catch{}
   if(type==='plan'){
     const p=plans.find(x=>x.id===activePlan);
     if(!p)return alert('Bitte erst einen Plan auswählen');
@@ -757,6 +766,8 @@ async function showActiveScreen(restoring){
   const orderedPm=sessionOrder.map(id=>allPmMap[id]).filter(Boolean);
   const el=document.getElementById('qtList');
   el.innerHTML=orderedPm.length?orderedPm.map(pm=>renderMachineCard(pm)).join(''):qtEmptyHtml();
+  const bwEl=document.getElementById('bwInput');bwEl.value=bodyWeight;bwEl.placeholder=bodyWeightLast||'kg';bwEl.classList.toggle('has',!!bodyWeight);
+  colorAllSets();
   // Abgehakte Geräte wiederherstellen
   orderedPm.forEach(pm=>{if(qtDone[pm.machine_id]){qtDone[pm.machine_id]=false;toggleDone(pm.machine_id)}});
 }
@@ -765,7 +776,7 @@ async function showActiveScreen(restoring){
 function cancelTraining(){
   if(!confirm('Training wirklich abbrechen? Alle Eingaben gehen verloren.'))return;
   clearPersistedTraining();
-  trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];
+  trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];bodyWeight='';
   hideTimerToast();
   renderQt();
 }
@@ -813,12 +824,12 @@ function renderMachineCard(pm){
       [0,1].forEach(i=>{
         const lw=lastDrops[i]?.weight||'';const lr=lastDrops[i]?.reps||'';
         const curW=st.d[i]?.w||'';const curR=st.d[i]?.r||'';
-        body+=`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorRep(this,${lr||0});this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"></div>`;
+        body+=`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorSet(${mid},${i});this.classList.toggle('has',!!this.value);if(this.value)startPauseTimer();persistTraining()"></div>`;
       });
       // Negativsatz (index 2) mit L/R
       const lw2=lastDrops[2]?.weight||'';
       const curW2=st.d[2]?.w||'';const curRL=st.d[2]?.rL||'';const curRR=st.d[2]?.rR||'';
-      body+=`<div class="qt-drop"><div class="qt-drop-label">Negativ</div><input class="qt-inp ${curW2?'has':''}" id="w-${mid}-2" type="number" inputmode="decimal" placeholder="${lw2||'kg'}" value="${curW2}" oninput="onWeightInput(${mid},2,this.value)"><div style="height:4px"></div><div class="qt-lr-label">L</div><input class="qt-inp ${curRL?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRL}" oninput="qtState[${mid}].d[2].rL=this.value;this.classList.toggle('has',!!this.value);persistTraining()"><div style="height:3px"></div><div class="qt-lr-label">R</div><input class="qt-inp ${curRR?'has':''}" type="number" inputmode="numeric" placeholder="wdh" value="${curRR}" oninput="qtState[${mid}].d[2].rR=this.value;this.classList.toggle('has',!!this.value);persistTraining()"></div>`;
+      body+=`<div class="qt-drop"><div class="qt-drop-label">Negativ</div><input class="qt-inp ${curW2?'has':''}" id="w-${mid}-2" type="number" inputmode="decimal" placeholder="${lw2||'kg'}" value="${curW2}" oninput="onWeightInput(${mid},2,this.value)"><div style="height:4px"></div><div class="qt-lr-label">L</div><input class="qt-inp ${curRL?'has':''}" id="rL-${mid}-2" type="number" inputmode="numeric" placeholder="wdh" value="${curRL}" oninput="qtState[${mid}].d[2].rL=this.value;colorSet(${mid},2);this.classList.toggle('has',!!this.value);persistTraining()"><div style="height:3px"></div><div class="qt-lr-label">R</div><input class="qt-inp ${curRR?'has':''}" id="rR-${mid}-2" type="number" inputmode="numeric" placeholder="wdh" value="${curRR}" oninput="qtState[${mid}].d[2].rR=this.value;colorSet(${mid},2);this.classList.toggle('has',!!this.value);persistTraining()"></div>`;
       body+=`</div>`;
     } else {
       // D, O und N-Zusammen: alle 3 Felder mit Gewicht + Wdh
@@ -827,7 +838,7 @@ function renderMachineCard(pm){
       body+=`<div class="qt-drops">${[0,1,2].map(i=>{
         const lw=lastDrops[i]?.weight||'';const lr=lastDrops[i]?.reps||'';
         const curW=st.d[i]?.w||'';const curR=st.d[i]?.r||'';
-        return`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorRep(this,${lr||0});this.classList.toggle('has',!!this.value);${timerCall}persistTraining()"></div>`;
+        return`<div class="qt-drop"><div class="qt-drop-label">${labels[i]}</div><input class="qt-inp ${curW?'has':''}" id="w-${mid}-${i}" type="number" inputmode="decimal" placeholder="${lw||'kg'}" value="${curW}" oninput="onWeightInput(${mid},${i},this.value)"><div style="height:6px"></div><input class="qt-inp ${curR?'has':''}" id="r-${mid}-${i}" type="number" inputmode="numeric" placeholder="${lr||'wdh'}" value="${curR}" oninput="qtState[${mid}].d[${i}].r=this.value;colorSet(${mid},${i});this.classList.toggle('has',!!this.value);${timerCall}persistTraining()"></div>`;
       }).join('')}</div>`;
     }
   }
@@ -939,10 +950,53 @@ function onWeightInput(mid,dropIdx,val){
       if(e2){e2.value=val;e2.classList.add('has')}
     }
   }
+  st.d.forEach((_,i)=>colorSet(mid,i));
   persistTraining();
 }
 
-function colorRep(el,lastR){if(!lastR||!el.value){el.style.color='var(--t)';el.style.fontWeight='400';return}const v=Number(el.value);el.style.color=v>lastR?'var(--ok)':(v<lastR?'var(--d)':'var(--t)');el.style.fontWeight='700'}
+// ── Vergleich mit dem letzten Mal (grün = besser, rot = schlechter, neutral = gleich) ──
+// Gleiches Gewicht: Wdh direkt vergleichen. Anderes Gewicht: geschätzter Kraftwert
+// (Epley: kg × (1 + Wdh/30)) mit ±2 % Spielraum. Bei 'assist' (z.B. Dips) ist das
+// Gewicht die Unterstützung: echte Last = Körpergewicht − Unterstützung.
+const SET_TOL=0.02;
+function est1rm(w,r){return w*(1+r/30)}
+function cmpStrength(now,last){const d=(now-last)/last;return d>SET_TOL?1:(d<-SET_TOL?-1:0)}
+function setVerdict(tt,curW,curR,lastW,lastR,bwNow,bwLast){
+  if(!curR||!lastR)return null;
+  if(!curW)curW=lastW;// leeres Gewichtsfeld = Platzhalter vom letzten Mal
+  if(tt==='assist'){
+    const sameBw=!bwNow||!bwLast||bwNow===bwLast;
+    if(!lastW||(curW===lastW&&sameBw))return Math.sign(curR-lastR);
+    if(bwNow){const eNow=bwNow-curW,eLast=(bwLast||bwNow)-lastW;if(eNow>0&&eLast>0)return cmpStrength(est1rm(eNow,curR),est1rm(eLast,lastR))}
+    // Ohne Körpergewicht: nur eindeutige Fälle bewerten
+    if(curW<lastW&&curR>=lastR)return 1;
+    if(curW>lastW&&curR<=lastR)return -1;
+    return 0;
+  }
+  if(!lastW||curW===lastW)return Math.sign(curR-lastR);
+  return cmpStrength(est1rm(curW,curR),est1rm(lastW,lastR));
+}
+function paintVerdict(el,v){if(!el)return;if(v===null||!el.value){el.style.color='var(--t)';el.style.fontWeight='400';return}el.style.color=v>0?'var(--ok)':(v<0?'var(--d)':'var(--t)');el.style.fontWeight='700'}
+function colorSet(mid,i){
+  const st=qtState[mid];if(!st||!st.d||!st.d[i])return;
+  const tt=trackType(machines.find(x=>x.id===mid));
+  const last=lastSession[mid]?.drops?.[i];
+  const lastW=parseFloat(last?.weight)||0,lastR=parseInt(last?.reps)||0;
+  const curW=parseFloat(st.d[i].w)||0;
+  const bwNow=parseFloat(bodyWeight)||parseFloat(bodyWeightLast)||0;
+  const bwLast=parseFloat(lastSession[mid]?.body_weight)||0;
+  const v=r=>setVerdict(tt,curW,parseInt(r)||0,lastW,lastR,bwNow,bwLast);
+  if(st.method==='n'&&st.einzeln&&i===2){
+    paintVerdict(document.getElementById('rL-'+mid+'-2'),v(st.d[2].rL));
+    paintVerdict(document.getElementById('rR-'+mid+'-2'),v(st.d[2].rR));
+  }else paintVerdict(document.getElementById('r-'+mid+'-'+i),v(st.d[i].r));
+}
+function colorAllSets(){Object.keys(qtState).forEach(mid=>{const st=qtState[mid];(st.d||[]).forEach((_,i)=>colorSet(Number(mid),i))})}
+function onBodyWeightInput(val){
+  bodyWeight=val;
+  const el=document.getElementById('bwInput');if(el)el.classList.toggle('has',!!val);
+  colorAllSets();persistTraining();
+}
 function toggleDone(mid){qtDone[mid]=!qtDone[mid];const el=document.getElementById('qt-'+mid);const cb=document.getElementById('cb-'+mid);const body=document.getElementById('body-'+mid);if(qtDone[mid]){el.classList.add('done');cb.classList.add('on');body.style.display='none'}else{el.classList.remove('done');cb.classList.remove('on');body.style.display='block'}persistTraining()}
 
 // ── Wellbeing ──
@@ -1028,8 +1082,11 @@ async function saveQt(){
 
 async function finishSaveQt(){
   const r=await api('/api/workouts/batch',{method:'POST',body:{workout_date:pendingDate,entries:pendingEntries}});
+  // Körpergewicht nur speichern, wenn heute eingetippt (Platzhalter = alter Wert)
+  const bw=parseFloat(bodyWeight);
+  if(bw>0){try{await api('/api/bodyweight',{method:'POST',body:{log_date:pendingDate,weight:bw}})}catch{}}
   clearPersistedTraining();
-  trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];
+  trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];bodyWeight='';
   hideTimerToast();
   await renderQt();
   document.getElementById('qtMsg').textContent=`✅ ${r.saved} Sätze gespeichert — Training beendet!`;setTimeout(()=>document.getElementById('qtMsg').textContent='',5000);
