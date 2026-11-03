@@ -6,5 +6,5 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
 self.addEventListener('fetch', () => {
-  // Kein respondWith = Browser lädt normal øber das Netzwerk
+  // Kein respondWith = Browser lädt normal über das Netzwerk
 });

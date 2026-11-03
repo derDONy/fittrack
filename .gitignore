@@ -11,3 +11,7 @@ data/
 .DS_Store
 Thumbs.db
 @eaDir/
+
+# Python-Cache / lokale Umgebung
+__pycache__/
+.venv/

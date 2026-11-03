@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.10.4"
+APP_VERSION = "0.12.0"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -166,21 +166,10 @@ def init_db():
             created_at TEXT DEFAULT (datetime('now'))
         );
 
-        CREATE TABLE IF NOT EXISTS api_tokens (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            token_hash TEXT NOT NULL UNIQUE,
-            token_prefix TEXT NOT NULL,
-            scopes TEXT NOT NULL DEFAULT 'read',
-            created_at TEXT DEFAULT (datetime('now')),
-            last_used TEXT DEFAULT NULL
-        );
-
         CREATE INDEX IF NOT EXISTS idx_workouts_machine ON workouts(machine_id);
         CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts(workout_date);
         CREATE INDEX IF NOT EXISTS idx_plan_machines ON plan_machines(plan_id);
         CREATE INDEX IF NOT EXISTS idx_wellbeing_date ON wellbeing_logs(log_date);
-        CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash);
     """)
 
     # ── Migrate old databases: add missing columns ──
@@ -260,54 +249,13 @@ def init_db():
 
 # ── Auth Middleware ──────────────────────────────────────────────────────────
 
-def _verify_api_token(token: str):
-    """Prüft einen API-Token und gibt (token_row | None) zurück."""
-    if not token or not token.startswith('ft_'):
-        return None
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    conn = get_db()
-    row = conn.execute(
-        "SELECT * FROM api_tokens WHERE token_hash = ?", (token_hash,)
-    ).fetchone()
-    if row:
-        conn.execute(
-            "UPDATE api_tokens SET last_used = datetime('now') WHERE id = ?", (row['id'],)
-        )
-        conn.commit()
-    conn.close()
-    return row
-
-
 def login_required(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         # Session-Auth
         if session.get('user_id'):
             return f(*args, **kwargs)
-        # Bearer-Token Auth
-        auth = request.headers.get('Authorization', '')
-        if auth.startswith('Bearer '):
-            token = auth[7:]
-            row = _verify_api_token(token)
-            if row:
-                return f(*args, **kwargs)
         return jsonify({"error": "Nicht eingeloggt"}), 401
-    return decorated
-
-
-def api_read_required(f):
-    """Für API-Endpunkte: Session ODER gültiger Token mit read-Scope."""
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-        if session.get('user_id'):
-            return f(*args, **kwargs)
-        auth = request.headers.get('Authorization', '')
-        if auth.startswith('Bearer '):
-            token = auth[7:]
-            row = _verify_api_token(token)
-            if row:
-                return f(*args, **kwargs)
-        return jsonify({"error": "Unauthorized"}), 401
     return decorated
 
 
@@ -977,196 +925,6 @@ ANTWORT-REGELN:
         app.logger.error(f"[FitTrack] AI-Fehler: {e}")
         return jsonify({"tip": "Fehler bei der AI-Analyse. Bitte später erneut versuchen."}), 500
 
-
-# ── API Token Management ────────────────────────────────────────────────────
-
-@app.route('/api/tokens', methods=['GET'])
-@login_required
-def get_tokens():
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT id, name, token_prefix, scopes, created_at, last_used FROM api_tokens ORDER BY created_at DESC"
-    ).fetchall()
-    conn.close()
-    return jsonify([dict(r) for r in rows])
-
-
-@app.route('/api/tokens', methods=['POST'])
-@login_required
-def create_token():
-    data = request.json or {}
-    name = data.get('name', '').strip()
-    if not name:
-        return jsonify({"error": "Name erforderlich"}), 400
-    scopes = data.get('scopes', 'read')
-    # Token generieren: ft_ + 32 zufällige Zeichen
-    raw_token = 'ft_' + secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    token_prefix = raw_token[:10] + '...'
-    conn = get_db()
-    cur = conn.execute(
-        "INSERT INTO api_tokens (name, token_hash, token_prefix, scopes) VALUES (?, ?, ?, ?)",
-        (name, token_hash, token_prefix, scopes)
-    )
-    conn.commit()
-    conn.close()
-    # Token wird NUR einmal zurückgegeben — danach nicht mehr abrufbar!
-    return jsonify({"ok": True, "id": cur.lastrowid, "token": raw_token, "prefix": token_prefix}), 201
-
-
-@app.route('/api/tokens/<int:token_id>', methods=['DELETE'])
-@login_required
-def delete_token(token_id):
-    conn = get_db()
-    conn.execute("DELETE FROM api_tokens WHERE id = ?", (token_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"ok": True})
-
-
-# ── Public API (Token-Auth) ─────────────────────────────────────────────────
-
-# Klartext-Labels für Befinden-Werte, damit externe Tools (z.B. Cowork) die
-# rohen Zahlen ohne Kenntnis des Frontend-Codes korrekt einordnen können.
-# Müssen mit den Optionen im Frontend (index.html, Befinden-Modal) übereinstimmen.
-WB_MOOD_LABELS = {1: "Super", 2: "Gut", 3: "Okay", 4: "Schlecht"}
-WB_SLEEP_LABELS = {1: "Sehr gut", 2: "Gut", 3: "Mäßig", 4: "Schlecht"}
-WB_JOINTS_LABELS = {1: "Kein Problem", 2: "Leicht steif", 3: "Schmerzhaft"}
-
-
-def _wb_labels(d):
-    """Ergänzt ein Befinden-Dict um Klartext-Labels. hydration ist ein Wert in
-    Litern (0.5/1/1.5/2), höher = mehr getrunken. Erwartet ein dict oder None."""
-    if not d:
-        return d
-    d['mood_label'] = WB_MOOD_LABELS.get(d.get('mood'))
-    d['sleep_label'] = WB_SLEEP_LABELS.get(d.get('sleep'))
-    d['joints_label'] = WB_JOINTS_LABELS.get(d.get('joints'))
-    d['hydration_unit'] = 'liters'
-    return d
-
-
-@app.route('/api/v1/summary', methods=['GET'])
-@api_read_required
-def api_summary():
-    """Zusammenfassung der letzten Trainings — für externe Tools (z.B. Cowork)."""
-    conn = get_db()
-    limit = request.args.get('limit', 10, type=int)
-    days = request.args.get('days', 30, type=int)
-    start = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-
-    # Trainingstage
-    dates = conn.execute(
-        "SELECT DISTINCT workout_date FROM workouts WHERE workout_date >= ? ORDER BY workout_date DESC LIMIT ?",
-        (start, limit)
-    ).fetchall()
-
-    result = []
-    for d in dates:
-        date = d['workout_date']
-
-        # Alle Geräte dieses Tages
-        rows = conn.execute("""
-            SELECT w.machine_id, m.name, m.category, w.training_method,
-                   w.weight, w.reps, w.drop_set_num, w.duration_seconds, w.notes
-            FROM workouts w JOIN machines m ON w.machine_id = m.id
-            WHERE w.workout_date = ?
-            ORDER BY w.created_at ASC, w.id ASC
-        """, (date,)).fetchall()
-
-        # Maschinen gruppieren
-        machine_groups = {}
-        machine_order = []
-        for r in rows:
-            key = (r['machine_id'], r['training_method'] or 'normal', r['notes'] or '')
-            if key not in machine_groups:
-                machine_groups[key] = {
-                    'name': r['name'],
-                    'category': r['category'],
-                    'method': r['training_method'] or 'normal',
-                    'sets': []
-                }
-                machine_order.append(key)
-            machine_groups[key]['sets'].append({
-                'weight': r['weight'],
-                'reps': r['reps'],
-                'drop_num': r['drop_set_num']
-            })
-
-        # Laufband separat auswerten
-        cardio = None
-        cardio_rows = [rows[i] for i, k in enumerate(machine_order) if machine_groups[list(machine_groups.keys())[i]]['category'] == 'Cardio'] if machine_order else []
-
-        # Laufband direkt aus DB
-        treadmill = conn.execute("""
-            SELECT w.weight as minutes, w.reps as distance_m, w.duration_seconds
-            FROM workouts w JOIN machines m ON w.machine_id = m.id
-            WHERE w.workout_date = ? AND m.category = 'Cardio'
-            ORDER BY w.id ASC LIMIT 1
-        """, (date,)).fetchone()
-
-        if treadmill:
-            cardio = {
-                'minutes': treadmill['minutes'],
-                'km': round((treadmill['distance_m'] or 0), 2),
-                'duration_seconds': treadmill['duration_seconds']
-            }
-
-        # Kraftgeräte (nicht Cardio)
-        strength_machines = [
-            machine_groups[k] for k in machine_order
-            if machine_groups[k]['category'] != 'Cardio'
-        ]
-
-        # Wellbeing für diesen Tag
-        wb = conn.execute(
-            "SELECT mood, sleep, hydration, joints FROM wellbeing_logs WHERE log_date = ?",
-            (date,)
-        ).fetchone()
-
-        result.append({
-            'date': date,
-            'machine_count': len(set(k[0] for k in machine_order if machine_groups[k]['category'] != 'Cardio')),
-            'set_count': sum(len(machine_groups[k]['sets']) for k in machine_order if machine_groups[k]['category'] != 'Cardio'),
-            'machines': strength_machines,
-            'cardio': cardio,
-            'wellbeing': _wb_labels(dict(wb)) if wb else None
-        })
-
-    conn.close()
-    return jsonify(result)
-
-
-@app.route('/api/v1/workouts', methods=['GET'])
-@api_read_required
-def api_workouts():
-    """Workout-Daten für externe Tools."""
-    conn = get_db()
-    days = request.args.get('days', 30, type=int)
-    start = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-    rows = conn.execute("""
-        SELECT w.*, m.name as machine_name, m.category
-        FROM workouts w JOIN machines m ON w.machine_id = m.id
-        WHERE w.workout_date >= ?
-        ORDER BY w.workout_date DESC, w.created_at DESC
-    """, (start,)).fetchall()
-    conn.close()
-    return jsonify([dict(r) for r in rows])
-
-
-@app.route('/api/v1/wellbeing', methods=['GET'])
-@api_read_required
-def api_wellbeing():
-    """Befinden-Daten für externe Tools."""
-    conn = get_db()
-    days = request.args.get('days', 30, type=int)
-    start = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-    rows = conn.execute(
-        "SELECT * FROM wellbeing_logs WHERE log_date >= ? ORDER BY log_date DESC",
-        (start,)
-    ).fetchall()
-    conn.close()
-    return jsonify([_wb_labels(dict(r)) for r in rows])
 
 # init_db() hier aufrufen, damit es sowohl unter Gunicorn als auch direkt funktioniert
 init_db()
