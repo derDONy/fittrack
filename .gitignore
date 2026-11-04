@@ -15,3 +15,9 @@ Thumbs.db
 # Python-Cache / lokale Umgebung
 __pycache__/
 .venv/
+
+# Interne Übergabe-Notizen — bleiben lokal auf der SSD, nicht auf GitHub
+HANDSOFF.md
+
+# Claude-Code-Session-Config
+.claude/
