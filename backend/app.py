@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.12.4"
+APP_VERSION = "0.12.5"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -122,6 +122,7 @@ def init_db():
             seat_settings TEXT DEFAULT '',
             notes TEXT DEFAULT '',
             tracking_type TEXT NOT NULL DEFAULT 'kraft',
+            max_weight REAL DEFAULT NULL,
             created_at TEXT DEFAULT (datetime('now')),
             archived INTEGER DEFAULT 0
         );
@@ -201,6 +202,8 @@ def init_db():
         conn.execute("ALTER TABLE machines ADD COLUMN tracking_type TEXT NOT NULL DEFAULT 'kraft'")
         # Bestehende Cardio-Geräte (z.B. Laufband) auf den Cardio-Tracking-Typ setzen
         conn.execute("UPDATE machines SET tracking_type = 'cardio' WHERE category = 'Cardio'")
+    if not col_exists('machines', 'max_weight'):
+        conn.execute("ALTER TABLE machines ADD COLUMN max_weight REAL DEFAULT NULL")
     conn.commit()
 
     # Create default user if no users exist
@@ -359,6 +362,22 @@ def change_password():
 
 # ── Machines API ────────────────────────────────────────────────────────────
 
+# Absolute Obergrenze als Sicherheitsnetz: Werte darüber sind körperlich unmöglich
+# und werden beim Speichern abgelehnt (fängt Tipper wie "10100" ab).
+ABS_MAX_WEIGHT = 1500
+
+
+def _parse_max_weight(val):
+    """Gerät-Maximalgewicht zu float oder None (leer = kein eigenes Limit)."""
+    if val is None or val == '':
+        return None
+    try:
+        w = float(val)
+    except (TypeError, ValueError):
+        return None
+    return w if w > 0 else None
+
+
 @app.route('/api/machines', methods=['GET'])
 @login_required
 def get_machines():
@@ -376,10 +395,10 @@ def add_machine():
         return jsonify({"error": "Name ist erforderlich"}), 400
     conn = get_db()
     cur = conn.execute(
-        "INSERT INTO machines (machine_number, name, category, muscle_group, seat_settings, notes, tracking_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO machines (machine_number, name, category, muscle_group, seat_settings, notes, tracking_type, max_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (data.get('machine_number', ''), data['name'], data.get('category', 'Sonstige'),
          data.get('muscle_group', ''), data.get('seat_settings', ''), data.get('notes', ''),
-         data.get('tracking_type', 'kraft'))
+         data.get('tracking_type', 'kraft'), _parse_max_weight(data.get('max_weight')))
     )
     conn.commit()
     machine = conn.execute("SELECT * FROM machines WHERE id = ?", (cur.lastrowid,)).fetchone()
@@ -393,10 +412,10 @@ def update_machine(machine_id):
     data = request.json
     conn = get_db()
     conn.execute(
-        "UPDATE machines SET machine_number=?, name=?, category=?, muscle_group=?, seat_settings=?, notes=?, tracking_type=? WHERE id=?",
+        "UPDATE machines SET machine_number=?, name=?, category=?, muscle_group=?, seat_settings=?, notes=?, tracking_type=?, max_weight=? WHERE id=?",
         (data.get('machine_number', ''), data.get('name', ''), data.get('category', 'Sonstige'),
          data.get('muscle_group', ''), data.get('seat_settings', ''), data.get('notes', ''),
-         data.get('tracking_type', 'kraft'), machine_id)
+         data.get('tracking_type', 'kraft'), _parse_max_weight(data.get('max_weight')), machine_id)
     )
     conn.commit()
     machine = conn.execute("SELECT * FROM machines WHERE id = ?", (machine_id,)).fetchone()
@@ -560,6 +579,17 @@ def batch_save_workouts():
     workout_date = data.get('workout_date', datetime.now().strftime('%Y-%m-%d'))
     training_method = data.get('training_method', 'dropsatz')
     entries = data['entries']
+
+    # Sicherheitsnetz: unmögliche Gewichte (z.B. Tippfehler "10100") komplett ablehnen,
+    # bevor irgendetwas gespeichert wird.
+    for entry in entries:
+        for drop in entry.get('drops', []):
+            try:
+                w = float(drop.get('weight') or 0)
+            except (TypeError, ValueError):
+                w = 0
+            if w > ABS_MAX_WEIGHT:
+                return jsonify({"error": f"Unplausibles Gewicht ({w:g} kg) — max. {ABS_MAX_WEIGHT} kg."}), 400
 
     conn = get_db()
     saved = 0
