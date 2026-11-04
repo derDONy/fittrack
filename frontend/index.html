@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FitTrack v0.12.5 — 2026-11-04 -->
+<!-- FitTrack v0.12.6 — 2026-11-04 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -403,7 +403,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
    </div>
   </div>
   <button class="btn-logout" onclick="doLogout()">Logout</button>
-  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.5</span> · 04.11.2026</div>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.6</span> · 04.11.2026</div>
   <div id="versionMismatch" style="display:none;text-align:center;color:var(--w);font-size:.68rem;margin-top:4px">⚠️ Backend meldet v<span id="beVersion"></span> — Frontend/Backend nicht synchron!</div>
  </div>
 </div>
@@ -1247,8 +1247,27 @@ async function delHistGroup(ids){
 }
 
 // Analysis
-async function loadAnalysis(){const mid=document.getElementById('anaMachine').value;const el=document.getElementById('anaResult');if(!mid)return el.innerHTML='';const d=await api(`/api/analytics/machine/${mid}`);const p=d.progress,pr=d.personal_records;let ti='➡️',tc='trend-neutral',tt='Stabil';if(p.trend==='up'){ti='📈';tc='trend-up';tt='Aufwärts'}if(p.trend==='down'){ti='📉';tc='trend-down';tt='Abwärts'}
-el.innerHTML=`<div class="stats"><div class="stat"><div class="v ${tc}">${ti}</div><div class="l">${tt}</div></div><div class="stat"><div class="v">${pr.max_weight||0}<small style="font-size:.5em">kg</small></div><div class="l">Max</div></div></div>${p.volume_change_pct!==undefined?`<p style="font-size:.85rem">Volumen: <strong class="${tc}">${p.volume_change_pct>0?'+':''}${p.volume_change_pct}%</strong></p>`:''}`}
+// Trend aus einer Messreihe (erste 5 vs. letzte 5), >5% = auf, <-5% = ab.
+function anaTrend(vals){const v=vals.filter(x=>x>0);if(v.length<2)return{ti:'➡️',tc:'trend-neutral',tt:'Stabil'};const r=v.slice(-5),o=v.slice(0,5);const ar=r.reduce((a,b)=>a+b,0)/r.length,ao=o.reduce((a,b)=>a+b,0)/o.length;const ch=ao>0?(ar-ao)/ao*100:0;if(ch>5)return{ti:'📈',tc:'trend-up',tt:'Aufwärts'};if(ch<-5)return{ti:'📉',tc:'trend-down',tt:'Abwärts'};return{ti:'➡️',tc:'trend-neutral',tt:'Stabil'}}
+function anaTiles(tr,maxVal,maxLabel,maxUnit){return`<div class="stats"><div class="stat"><div class="v ${tr.tc}">${tr.ti}</div><div class="l">${tr.tt}</div></div><div class="stat"><div class="v">${maxVal}${maxUnit?`<small style="font-size:.5em">${maxUnit}</small>`:''}</div><div class="l">${maxLabel}</div></div></div>`}
+async function loadAnalysis(){
+  const mid=document.getElementById('anaMachine').value;const el=document.getElementById('anaResult');if(!mid)return el.innerHTML='';
+  const d=await api(`/api/analytics/machine/${mid}`);const p=d.progress,pr=d.personal_records;const tt=trackType(d.machine);const ws=d.workouts||[];
+  if(tt==='cardio'){
+    // Cardio: Minuten liegen im Gewichtsfeld, km im Wdh-Feld.
+    const kms=ws.map(w=>parseFloat(w.reps)||0),mins=ws.map(w=>parseFloat(w.weight)||0);
+    const maxKm=Math.max(0,...kms),maxMin=Math.max(0,...mins);
+    el.innerHTML=anaTiles(anaTrend(kms),maxKm,'Max Distanz','km')+`<p style="font-size:.85rem">Längste Dauer: <strong>${maxMin} Min</strong></p>`;return;
+  }
+  if(tt==='halten'){
+    // Halten: Dauer in Sekunden (duration_seconds).
+    const secs=ws.map(w=>parseInt(w.duration_seconds)||0);const best=Math.max(0,...secs);
+    el.innerHTML=anaTiles(anaTrend(secs),fmtSec(best),'Bestzeit','');return;
+  }
+  // Kraft / Unterstützt: Gewicht × Wdh (wie bisher).
+  let tr={ti:'➡️',tc:'trend-neutral',tt:'Stabil'};if(p.trend==='up'){tr={ti:'📈',tc:'trend-up',tt:'Aufwärts'}}if(p.trend==='down'){tr={ti:'📉',tc:'trend-down',tt:'Abwärts'}}
+  el.innerHTML=anaTiles(tr,pr.max_weight||0,'Max','kg')+`${p.volume_change_pct!==undefined?`<p style="font-size:.85rem">Volumen: <strong class="${tr.tc}">${p.volume_change_pct>0?'+':''}${p.volume_change_pct}%</strong></p>`:''}`;
+}
 
 // Modal close
 document.getElementById('planModal').addEventListener('click',e=>{if(e.target.classList.contains('mo'))closePlanModal()});
