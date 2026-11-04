@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory, session
 
-APP_VERSION = "0.12.6"
+APP_VERSION = "0.12.10"
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -823,9 +823,16 @@ def analytics_history():
     conn = get_db()
     days = request.args.get('days', 90, type=int)
     start = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+    # Typ-bewusst: Kraft-Volumen nur aus Kraftgeräten (Cardio/Halten/Dips fließen NICHT
+    # ins kg-Volumen). Cardio-km und Halte-Sekunden werden separat pro Tag summiert.
     rows = conn.execute("""
-        SELECT workout_date, COUNT(*) as count, SUM(weight * reps * sets) as total_volume
-        FROM workouts WHERE workout_date >= ? GROUP BY workout_date ORDER BY workout_date ASC
+        SELECT w.workout_date,
+               COUNT(*) as count,
+               SUM(CASE WHEN m.tracking_type = 'kraft' THEN w.weight * w.reps * w.sets ELSE 0 END) as total_volume,
+               SUM(CASE WHEN m.tracking_type = 'cardio' THEN w.reps ELSE 0 END) as cardio_km,
+               SUM(CASE WHEN m.tracking_type = 'halten' THEN w.duration_seconds ELSE 0 END) as hold_seconds
+        FROM workouts w JOIN machines m ON w.machine_id = m.id
+        WHERE w.workout_date >= ? GROUP BY w.workout_date ORDER BY w.workout_date ASC
     """, (start,)).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])

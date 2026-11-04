@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FitTrack v0.12.6 — 2026-11-04 -->
+<!-- FitTrack v0.12.10 — 2026-11-04 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -315,7 +315,6 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 
  <!-- DASHBOARD -->
  <div id="tab-dash" class="tc fi">
-  <div class="stats" id="statsRow"></div>
   <div id="negBanner"></div>
   <div class="card">
    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
@@ -329,7 +328,13 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
     <button onclick="setVolPeriod(365,this)">12 M</button>
    </div>
    <div id="volStats" class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:10px;margin-bottom:12px"></div>
+   <div id="volExtra" class="stats" style="margin-bottom:12px"></div>
    <div id="volChart"></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">📈 Analyse</h3>
+   <div class="fg"><select id="anaMachine" onchange="loadAnalysis()"><option value="">Gerät wählen…</option></select></div>
+   <div id="anaResult"></div>
   </div>
   <div class="card" style="margin-top:10px">
    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
@@ -371,11 +376,6 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
    <button class="mo-btn mo-btn-s" style="margin-top:10px;width:100%" onclick="openMachineModal()">+ Gerät hinzufügen</button>
   </div>
   <div class="card" style="margin-top:10px">
-   <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">📈 Analyse</h3>
-   <div class="fg"><select id="anaMachine" onchange="loadAnalysis()"><option value="">Gerät wählen…</option></select></div>
-   <div id="anaResult"></div>
-  </div>
-  <div class="card" style="margin-top:10px">
    <h3 style="font-size:.88rem;font-weight:700;margin-bottom:10px">⏱ Pausentimer</h3>
    <div class="fg"><label>Pause zwischen Sätzen</label>
     <select id="pauseTimerSel" onchange="savePauseTimerSetting(this.value)">
@@ -403,7 +403,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
    </div>
   </div>
   <button class="btn-logout" onclick="doLogout()">Logout</button>
-  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.6</span> · 04.11.2026</div>
+  <div style="text-align:center;color:var(--t3);font-size:.7rem;margin-top:12px;font-family:var(--m)">FitTrack v<span id="feVersion">0.12.10</span> · 04.11.2026</div>
   <div id="versionMismatch" style="display:none;text-align:center;color:var(--w);font-size:.68rem;margin-top:4px">⚠️ Backend meldet v<span id="beVersion"></span> — Frontend/Backend nicht synchron!</div>
  </div>
 </div>
@@ -1022,11 +1022,14 @@ function wbSel(key,val,el){
 function openWbModal(){
   wbData={mood:null,sleep:null,hydration:null,joints:null};
   document.querySelectorAll('#wbModal .wb-opt').forEach(o=>o.classList.remove('sel'));
+  document.querySelectorAll('#wbModal .mo-actions button').forEach(b=>b.disabled=false);
   document.getElementById('wbModal').classList.add('open');
 }
 function closeWbModal(){document.getElementById('wbModal').classList.remove('open')}
 
 async function confirmWellbeing(){
+  if(qtSaving)return;
+  document.querySelectorAll('#wbModal .mo-actions button').forEach(b=>b.disabled=true);
   // Save wellbeing
   await api('/api/wellbeing',{method:'POST',body:{log_date:pendingDate,mood:wbData.mood||3,sleep:wbData.sleep||3,hydration:wbData.hydration,joints:wbData.joints,is_training_day:1}});
   closeWbModal();
@@ -1034,6 +1037,8 @@ async function confirmWellbeing(){
 }
 
 async function skipWellbeing(){
+  if(qtSaving)return;
+  document.querySelectorAll('#wbModal .mo-actions button').forEach(b=>b.disabled=true);
   closeWbModal();
   await finishSaveQt();
 }
@@ -1103,17 +1108,23 @@ async function saveQt(){
   openWbModal();
 }
 
+// Schutz gegen doppeltes Absenden: verhindert, dass ein schneller Doppeltipp auf
+// „Speichern & Beenden"/„Überspringen" das Training zweimal speichert (Dubletten).
+let qtSaving=false;
 async function finishSaveQt(){
-  const r=await api('/api/workouts/batch',{method:'POST',body:{workout_date:pendingDate,entries:pendingEntries}});
-  // Körpergewicht nur speichern, wenn heute eingetippt (Platzhalter = alter Wert)
-  const bw=parseFloat(bodyWeight);
-  if(bw>0){try{await api('/api/bodyweight',{method:'POST',body:{log_date:pendingDate,weight:bw}})}catch{}}
-  clearPersistedTraining();
-  trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];bodyWeight='';
-  hideTimerToast();
-  await renderQt();
-  document.getElementById('qtMsg').textContent=`✅ ${r.saved} Sätze gespeichert — Training beendet!`;setTimeout(()=>document.getElementById('qtMsg').textContent='',5000);
-  loadOverview();loadHistory();loadWbChart(30);
+  if(qtSaving)return;qtSaving=true;
+  try{
+    const r=await api('/api/workouts/batch',{method:'POST',body:{workout_date:pendingDate,entries:pendingEntries}});
+    // Körpergewicht nur speichern, wenn heute eingetippt (Platzhalter = alter Wert)
+    const bw=parseFloat(bodyWeight);
+    if(bw>0){try{await api('/api/bodyweight',{method:'POST',body:{log_date:pendingDate,weight:bw}})}catch{}}
+    clearPersistedTraining();
+    trainingActive=false;sessionType=null;qtState={};qtDone={};extraMachines=[];skippedMachines=[];sessionOrder=[];bodyWeight='';
+    hideTimerToast();
+    await renderQt();
+    document.getElementById('qtMsg').textContent=`✅ ${r.saved} Sätze gespeichert — Training beendet!`;setTimeout(()=>document.getElementById('qtMsg').textContent='',5000);
+    loadOverview();loadHistory();loadWbChart(30);
+  }finally{qtSaving=false;}
 }
 
 // Wellbeing Chart
@@ -1165,7 +1176,7 @@ function togglePlanM(id){const i=planSelIds.indexOf(id);if(i>=0)planSelIds.splic
 async function savePlan(){const id=document.getElementById('editPlanId').value;const d={name:document.getElementById('planName').value.trim(),training_method:'dropsatz',machine_ids:planSelIds};if(!d.name)return alert('Name fehlt');if(!d.machine_ids.length)return alert('Min. 1 Gerät');if(id)await api(`/api/plans/${id}`,{method:'PUT',body:d});else{const r=await api('/api/plans',{method:'POST',body:d});activePlan=r.id}closePlanModal();loadPlans()}
 
 // Dashboard
-async function loadOverview(){const o=await api('/api/analytics/overview');document.getElementById('statsRow').innerHTML=`<div class="stat"><div class="v">${o.total_workouts}</div><div class="l">Gesamt</div></div><div class="stat"><div class="v">${o.workouts_this_week}</div><div class="l">Diese Woche</div></div><div class="stat"><div class="v">${o.workouts_this_month}</div><div class="l">30 Tage</div></div><div class="stat"><div class="v">${o.active_days_this_month}</div><div class="l">Trainingstage</div></div>`;
+async function loadOverview(){const o=await api('/api/analytics/overview');
   const n=o.neglected_machines||[];document.getElementById('negBanner').innerHTML=n.length?`<div class="neg"><h3>⚠️ Vernachlässigt (&gt;14 Tage)</h3><div class="neg-list">${n.map(x=>`<span class="neg-item">${esc(x.name)} ${x.last_used?'— '+x.last_used:'— nie'}</span>`).join('')}</div></div>`:''}
 // ── Volumen + gemeinsame Chart-Helfer ──
 const CHART_MN=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
@@ -1197,10 +1208,16 @@ async function loadVolChart(){
 function renderVolChart(){
   const el=document.getElementById('volChart');
   document.getElementById('volPeriodLabel').textContent=periodName(volPeriod)+(volPeriod>=180?' · pro Woche':'');
-  const items=(volRaw||[]).map(x=>({date:new Date(x.workout_date+'T00:00:00'),vol:x.total_volume||0})).sort((a,b)=>a.date-b.date);
-  if(!items.length){document.getElementById('volStats').innerHTML='';el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Keine Daten.</p>';return}
-  const total=items.reduce((a,b)=>a+b.vol,0),days=items.length,avgTrain=Math.round(total/days);
+  const items=(volRaw||[]).map(x=>({date:new Date(x.workout_date+'T00:00:00'),vol:x.total_volume||0,km:x.cardio_km||0,sec:x.hold_seconds||0})).sort((a,b)=>a.date-b.date);
+  if(!items.length){document.getElementById('volStats').innerHTML='';document.getElementById('volExtra').innerHTML='';el.innerHTML='<p style="color:var(--t2);font-size:.82rem">Keine Daten.</p>';return}
+  const total=items.reduce((a,b)=>a+b.vol,0),days=items.length;
+  const strengthDays=items.filter(x=>x.vol>0).length;const avgTrain=strengthDays?Math.round(total/strengthDays):0;
   document.getElementById('volStats').innerHTML=`<div class="stat"><div class="v">${fmtNum(total)}</div><div class="l">Gesamt kg</div></div><div class="stat"><div class="v" style="color:var(--a2)">${fmtNum(avgTrain)}</div><div class="l">Ø / Training</div></div><div class="stat"><div class="v" style="color:var(--t)">${days}</div><div class="l">Trainingstage</div></div>`;
+  // Cardio/Halten: Durchschnitt pro Trainingstag (Tage mit der jeweiligen Aktivität)
+  const cardioDays=items.filter(x=>x.km>0),holdDays=items.filter(x=>x.sec>0);const extra=[];
+  if(cardioDays.length){const avgKm=cardioDays.reduce((a,b)=>a+b.km,0)/cardioDays.length;extra.push(`<div class="stat"><div class="v" style="color:var(--a2)">${(Math.round(avgKm*10)/10).toLocaleString('de-DE')}<small style="font-size:.5em">km</small></div><div class="l">Ø Laufstrecke</div></div>`)}
+  if(holdDays.length){const avgSec=Math.round(holdDays.reduce((a,b)=>a+b.sec,0)/holdDays.length);extra.push(`<div class="stat"><div class="v" style="color:var(--t)">${fmtSec(avgSec)}</div><div class="l">Ø Plankzeit</div></div>`)}
+  const vx=document.getElementById('volExtra');vx.innerHTML=extra.join('');vx.style.gridTemplateColumns=extra.length?`repeat(${extra.length},1fr)`:'';
   const weekly=volPeriod>=180;
   const groups=weekly?weeklyGroups(items):items.map(x=>[x]);
   const vals=groups.map(g=>({v:g.reduce((a,b)=>a+b.vol,0),date:g[0].date}));
